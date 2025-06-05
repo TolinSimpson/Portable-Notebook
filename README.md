@@ -27,7 +27,7 @@ A lightweight, privacy-focused note-taking application that runs entirely in you
 
 ## 🚀 Quick Start
 
-1. Download `notebook.html` (development) or `notebook-min.html` (optimized)
+1. Download `notebook-dev.html` (development) or `notebook.html` (optimized)
 2. Open the file in any modern web browser on desktop or mobile
 3. Start taking notes immediately!
 
