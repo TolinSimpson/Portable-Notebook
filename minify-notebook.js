@@ -5,8 +5,8 @@ const UglifyJS = require('uglify-js');
 const CleanCSS = require('clean-css');
 
 async function minifyNotebook() {
-    const inputFile = 'notebook.html';
-    const outputFile = 'notebook-min.html';
+    const inputFile = 'notebook-dev.html';
+    const outputFile = 'notebook.html';
     
     try {
         console.log('🚀 Starting minification process...');
