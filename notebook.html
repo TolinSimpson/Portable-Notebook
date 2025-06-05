@@ -656,6 +656,50 @@
             margin-left: 8px;
         }
 
+        /* Menu dropdown styles */
+        .menu-container {
+            position: relative;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 200px;
+            padding: 8px 0;
+            margin-top: 4px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .menu-separator {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 4px 0;
+        }
+
         /* Custom scrollbar styling for webkit browsers */
         .note-list::-webkit-scrollbar,
         .sidebar::-webkit-scrollbar,
@@ -853,6 +897,132 @@
             }
         }
 
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 24px 24px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #374151;
+        }
+
+        .modal-body {
+            padding: 24px;
+            line-height: 1.6;
+        }
+
+        .modal-body h3 {
+            color: #1e293b;
+            margin: 0 0 12px 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-body p {
+            margin: 0 0 16px 0;
+            color: #475569;
+        }
+
+        .modal-body a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .modal-body a:hover {
+            text-decoration: underline;
+        }
+
+        .version-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .feature-list li {
+            padding: 4px 0;
+            color: #475569;
+        }
+
+        .feature-list li::before {
+            content: "•";
+            color: #3b82f6;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
         /* Reduced motion for accessibility */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -881,6 +1051,17 @@
                            aria-describedby="encryption-desc">
                     <label for="encryptionEnabled">🔒 Encrypt Notebook</label>
                     <span id="encryption-desc" class="sr-only">Enable password protection for your entire notebook</span>
+                </div>
+                <div class="menu-container">
+                    <button class="btn btn-secondary" onclick="toggleMenu()" id="menuBtn">⚙️ Menu</button>
+                    <div class="menu-dropdown hidden" id="menuDropdown">
+                        <button class="menu-item" onclick="checkForUpdates()">🔄 Check for Updates</button>
+                        <div class="menu-separator"></div>
+                        <button class="menu-item" onclick="exportNotes()">📤 Export Notes</button>
+                        <button class="menu-item" onclick="importNotes()">📥 Import Notes</button>
+                        <div class="menu-separator"></div>
+                        <button class="menu-item" onclick="showAbout()">ℹ️ About</button>
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="downloadUpdatedFile()" 
                         aria-label="Download and save your notebook file">💾 Save File</button>
@@ -972,7 +1153,24 @@
         </div>
     </div>
 
+    <!-- About Modal -->
+    <div class="modal-overlay" id="aboutModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About Portable Notebook</h2>
+                <button class="modal-close" onclick="closeAboutModal()">×</button>
+            </div>
+            <div class="modal-body" id="aboutModalBody">
+                <!-- Content will be added by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Repository configuration
+        const REPO_BASE_URL = 'https://github.com/TolinSimpson/Portable-Notebook';
+        const CURRENT_VERSION = '1.0.0';
+        
         // NOTES DATA - DO NOT EDIT MANUALLY
         let NOTES_DATA = {"General":{"1734637200000":{"title":"Welcome to Notebook! 👋","content":"<h2>Getting Started</h2>\n                <p>Welcome to your new note-taking workspace! Here's how to get started:</p>\n                <ul>\n                <li><strong>Create notes:</strong> Click the \"New Note\" button</li>\n                <li><strong>Organize:</strong> Use categories to group your notes</li>\n                <li><strong>Search:</strong> Use the search bar to find notes quickly</li>\n                <li><strong>Format:</strong> Use the toolbar to style your text</li>\n                <li><strong>Encrypt:</strong> Enable notebook encryption for privacy</li>\n                </ul>\n                <p>Your notes are automatically saved as you type and work completely offline. Happy note-taking! ✨</p>","lastModified":"2024-12-20T00:00:00.000Z","encrypted":false}}};
         let CATEGORIES_DATA = ["General"];
@@ -1059,6 +1257,23 @@
             
             // Prevent unwanted formatting on Enter key
             editor.addEventListener('keypress', handleEditorKeypress);
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const menuContainer = document.querySelector('.menu-container');
+                const menuDropdown = document.getElementById('menuDropdown');
+                if (!menuContainer.contains(e.target)) {
+                    menuDropdown.classList.add('hidden');
+                }
+            });
+
+            // Close modal when clicking outside
+            document.addEventListener('click', (e) => {
+                const aboutModal = document.getElementById('aboutModal');
+                if (e.target === aboutModal) {
+                    closeAboutModal();
+                }
+            });
             
             // Category change
             document.getElementById('noteCategorySelect').addEventListener('change', changeNoteCategory);
@@ -1547,7 +1762,7 @@
                 if (heading && heading.tagName.toLowerCase() === tag) {
                     execCommand('formatBlock', 'p');
                 } else {
-                    execCommand('formatBlock', tag);
+            execCommand('formatBlock', tag);
                 }
             } else {
                 execCommand('formatBlock', tag);
@@ -1779,13 +1994,13 @@
                 } else {
                     // No text selected, prompt for code
                     const code = prompt('Enter your code:\n(Multi-line code will create a code block)');
-                    if (code) {
+            if (code) {
                         const isMultiline = code.includes('\n');
                         
                         if (isMultiline) {
                             // Create code block
-                            const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
-                            execCommand('insertHTML', codeBlock);
+                const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+                execCommand('insertHTML', codeBlock);
                         } else {
                             // Create inline code
                             const inlineCode = `<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-family: Monaco, Menlo, monospace; font-size: 0.9em;">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
@@ -1899,10 +2114,10 @@
                     execCommand('insertHTML', quoteBlock);
                 } else {
                     // No text selected, prompt for quote
-                    const quote = prompt('Enter your quote or citation:');
-                    if (quote) {
+            const quote = prompt('Enter your quote or citation:');
+            if (quote) {
                         const quoteBlock = `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280; background: #f8fafc; padding: 12px 16px; border-radius: 0 4px 4px 0;">${quote}</blockquote>`;
-                        execCommand('insertHTML', quoteBlock);
+                execCommand('insertHTML', quoteBlock);
                     }
                 }
                 
@@ -1958,7 +2173,7 @@
                 const selectedText = selection.toString();
                 let url = prompt('Enter the URL:\n(Include http:// or https://)', 'https://');
                 
-                if (url && url !== 'https://') {
+            if (url && url !== 'https://') {
                     // Ensure URL has protocol
                     if (!url.match(/^https?:\/\//)) {
                         url = 'https://' + url;
@@ -2271,6 +2486,217 @@
                     }
                 }
             }
+        }
+
+        // Menu functions
+        function toggleMenu() {
+            const menuDropdown = document.getElementById('menuDropdown');
+            menuDropdown.classList.toggle('hidden');
+        }
+
+        async function checkForUpdates() {
+            const repoUrl = `${REPO_BASE_URL}/releases`;
+            
+            try {
+                // Show checking message
+                const checkingAlert = setTimeout(() => {
+                    alert('Checking for updates...');
+                }, 500);
+                
+                // Fetch latest release from GitHub API
+                const apiUrl = REPO_BASE_URL.replace('https://github.com/', 'https://api.github.com/repos/');
+                const response = await fetch(`${apiUrl}/releases/latest`);
+                clearTimeout(checkingAlert);
+                
+                if (!response.ok) {
+                    throw new Error(`GitHub API responded with status: ${response.status}`);
+                }
+                
+                const release = await response.json();
+                const latestVersion = release.tag_name.replace(/^v./, ''); // Remove 'v' prefix if present
+                
+                // Compare versions
+                if (compareVersions(latestVersion, CURRENT_VERSION) > 0) {
+                    // Update available
+                    const updateMessage = 
+                        `🆕 Update Available!\n\n` +
+                        `Current version: ${CURRENT_VERSION}\n` +
+                        `Latest version: ${latestVersion}\n\n` +
+                        `Release: ${release.name}\n\n` +
+                        `Would you like to open the releases page to download the update?`;
+                    
+                    if (confirm(updateMessage)) {
+                        window.open(repoUrl, '_blank', 'noopener,noreferrer');
+                    }
+                } else {
+                    // No update available
+                    alert(`✅ You're up to date!\n\nCurrent version: ${CURRENT_VERSION}\nLatest version: ${latestVersion}`);
+                }
+                
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+                const fallbackMessage = 
+                    `❌ Could not check for updates automatically.\n\n` +
+                    `Error: ${error.message}\n\n` +
+                    `Would you like to open the releases page manually?`;
+                
+                if (confirm(fallbackMessage)) {
+                    window.open(repoUrl, '_blank', 'noopener,noreferrer');
+                }
+            }
+            
+            document.getElementById('menuDropdown').classList.add('hidden');
+        }
+
+        function compareVersions(version1, version2) {
+            // Convert version strings to arrays of numbers
+            const v1parts = version1.split('.').map(Number);
+            const v2parts = version2.split('.').map(Number);
+            
+            // Pad arrays to same length
+            const maxLength = Math.max(v1parts.length, v2parts.length);
+            while (v1parts.length < maxLength) v1parts.push(0);
+            while (v2parts.length < maxLength) v2parts.push(0);
+            
+            // Compare each part
+            for (let i = 0; i < maxLength; i++) {
+                if (v1parts[i] > v2parts[i]) return 1;
+                if (v1parts[i] < v2parts[i]) return -1;
+            }
+            
+            return 0; // Versions are equal
+        }
+
+        function exportNotes() {
+            try {
+                // Create export data
+                const exportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    notes: notes,
+                    categories: categories,
+                    encrypted: encryptionEnabled
+                };
+
+                // Convert to JSON
+                const jsonString = JSON.stringify(exportData, null, 2);
+                
+                // Create and download file
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `notebook-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Notes exported successfully!');
+            } catch (error) {
+                alert('Error exporting notes: ' + error.message);
+            }
+            
+            document.getElementById('menuDropdown').classList.add('hidden');
+        }
+
+        function importNotes() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const importData = JSON.parse(text);
+                    
+                    // Validate import data structure
+                    if (!importData.notes || !importData.categories) {
+                        throw new Error('Invalid export file format');
+                    }
+                    
+                    const overwrite = confirm(
+                        'Import options:\n\n' +
+                        'OK = Replace all existing notes\n' +
+                        'Cancel = Merge with existing notes\n\n' +
+                        'Note: Merging may create duplicate categories.'
+                    );
+                    
+                    if (overwrite) {
+                        // Replace all data
+                        notes = importData.notes;
+                        categories = importData.categories;
+                    } else {
+                        // Merge data
+                        Object.keys(importData.notes).forEach(category => {
+                            if (!notes[category]) {
+                                notes[category] = {};
+                            }
+                            Object.assign(notes[category], importData.notes[category]);
+                        });
+                        
+                        importData.categories.forEach(category => {
+                            if (!categories.includes(category)) {
+                                categories.push(category);
+                            }
+                        });
+                    }
+                    
+                    // Check if imported data is encrypted
+                    if (importData.encrypted && !encryptionEnabled) {
+                        const enableEncryption = confirm(
+                            'The imported notes are encrypted. Would you like to enable encryption for this notebook?'
+                        );
+                        if (enableEncryption) {
+                            document.getElementById('encryptionEnabled').checked = true;
+                            encryptionEnabled = true;
+                        }
+                    }
+                    
+                    // Refresh the UI
+                    currentCategory = 'General';
+                    currentNote = null;
+                    updateCategoryList();
+                    updateNoteList();
+                    updateCategorySelect();
+                    
+                    // Clear editor
+                    document.getElementById('editorTitle').value = '';
+                    document.getElementById('editor').innerHTML = '';
+                    
+                    scheduleAutoSave();
+                    alert(`Notes imported successfully!\n\nImported: ${Object.keys(importData.notes).length} categories`);
+                    
+                } catch (error) {
+                    alert('Error importing notes: ' + error.message);
+                }
+            };
+            
+            input.click();
+            document.getElementById('menuDropdown').classList.add('hidden');
+        }
+
+        function showAbout() {
+            const modalBody = document.getElementById('aboutModalBody');
+            modalBody.innerHTML = `
+                <div class="version-info">
+                    <h3>📝 Portable Notebook v${CURRENT_VERSION}</h3>
+                    <p><strong>Original Creator:</strong> Tolin Simpson</p>
+                    <p><strong>Repository:</strong> <a href="${REPO_BASE_URL}" target="_blank">GitHub</a></p>
+                    <p><strong>License:</strong> <a href="${REPO_BASE_URL}/tree/main?tab=MIT-1-ov-file#readme" target="_blank">MIT</a></p>
+                </div>
+            `;
+            
+            document.getElementById('aboutModal').style.display = 'flex';
+            document.getElementById('menuDropdown').classList.add('hidden');
+        }
+
+        function closeAboutModal() {
+            document.getElementById('aboutModal').style.display = 'none';
         }
 
         // Initialize app
