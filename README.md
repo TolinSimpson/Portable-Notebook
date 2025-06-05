@@ -137,7 +137,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🔄 Updates
 
-The notebook automatically checks for updates when opened. You can also manually check for updates using the settings menu (⚙️).
+You can manually check for updates using the settings menu (⚙️).
 
 ## 📞 Support
 
