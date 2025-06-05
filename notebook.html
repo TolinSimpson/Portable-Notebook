@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+    <meta name="description" content="Private, offline note-taking application with encryption support">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Notebook">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>📝 Notebook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 320px 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 1px;
+            background: #e2e8f0;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .encryption-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #fef3c7;
+            border-radius: 6px;
+            border: 1px solid #f59e0b;
+        }
+
+        .encryption-controls label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #92400e;
+            cursor: pointer;
+        }
+
+        .encryption-controls input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 280px;
+            min-width: 200px;
+            flex-shrink: 1;
+        }
+
+        .search-input {
+            padding: 8px 16px 8px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .sidebar {
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+        }
+
+        .sidebar-section {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .sidebar-section h2 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        .new-category-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .new-category-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .new-category-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .category-list {
+            list-style: none;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            margin: 2px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .category-item:hover {
+            background: #f8fafc;
+        }
+
+        .category-item.active {
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .category-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #3b82f6;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .category-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 0;
+        }
+
+        .note-count {
+            font-size: 12px;
+            color: #6b7280;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 8px;
+        }
+
+        .delete-category {
+            opacity: 0;
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .category-item:hover .delete-category {
+            opacity: 1;
+        }
+
+        .delete-category:hover {
+            background: #fef2f2;
+        }
+
+        .note-list {
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+
+
+        .note-list-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .note-list-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .note-items {
+            padding: 12px;
+            overflow-x: hidden;
+        }
+
+        .note-item {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .note-item:hover {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .note-item.active {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .note-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .note-preview {
+            font-size: 0.875rem;
+            color: #6b7280;
+            line-height: 1.4;
+            max-height: 2.8em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .editor-panel {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .editor-title-input {
+            flex: 1;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border: none;
+            padding: 8px 0;
+            color: #1e293b;
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .editor-title-input:focus {
+            outline: none;
+        }
+
+        .editor-title-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .editor-toolbar {
+            padding: 12px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            align-items: center;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .toolbar-btn {
+            padding: 6px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar-btn:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+        }
+
+        .toolbar-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            min-height: 0;
+        }
+
+        .editor {
+            min-height: 400px;
+            outline: none;
+            line-height: 1.6;
+            font-size: 1rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: 100%;
+            box-sizing: border-box;
+            height: auto;
+        }
+
+        .editor:empty::before {
+            content: "Start writing your note...";
+            color: #9ca3af;
+        }
+
+        .editor h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 24px 0 16px 0;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        .editor h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            color: #334155;
+        }
+
+        .editor h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+            color: #475569;
+        }
+
+        .editor blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 16px;
+            margin: 16px 0;
+            font-style: italic;
+            color: #6b7280;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .editor pre {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 4px;
+            border-left: 4px solid #3b82f6;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .editor table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .editor table td,
+        .editor table th {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .editor table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .editor img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin: 8px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .editor ul, .editor ol {
+            padding-left: 24px;
+            margin: 12px 0;
+        }
+
+        .editor li {
+            margin: 4px 0;
+        }
+
+        .status-bar {
+            padding: 12px 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .auto-save-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .save-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .save-dot.saving {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Screen reader only - accessible but visually hidden */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Skip link for keyboard navigation */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            z-index: 1000;
+            font-weight: 500;
+        }
+
+        .skip-link:focus {
+            top: 6px;
+        }
+
+        /* Focus styles for accessibility */
+        *:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .search-input:focus,
+        .editor-title-input:focus,
+        .editor:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .encryption-indicator {
+            color: #10b981;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+
+        /* Custom scrollbar styling for webkit browsers */
+        .note-list::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar,
+        .editor-content::-webkit-scrollbar,
+        .editor-toolbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .note-list::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track,
+        .editor-content::-webkit-scrollbar-track,
+        .editor-toolbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .note-list::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb,
+        .editor-content::-webkit-scrollbar-thumb,
+        .editor-toolbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .note-list::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .editor-content::-webkit-scrollbar-thumb:hover,
+        .editor-toolbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Tablet responsiveness */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 240px 280px 1fr;
+            }
+            
+            .header {
+                padding: 0 16px;
+            }
+            
+            .header-left {
+                gap: 16px;
+            }
+            
+            .search-container {
+                max-width: 220px;
+                min-width: 150px;
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .header {
+                padding: 8px 16px;
+                flex-wrap: wrap;
+                min-height: auto;
+                gap: 12px;
+            }
+            
+            .header-left {
+                gap: 12px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .search-container {
+                max-width: 200px;
+                min-width: 140px;
+            }
+            
+            .search-input {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 6px 12px 6px 32px;
+            }
+            
+            .search-icon {
+                left: 8px;
+                font-size: 0.9rem;
+            }
+            
+            .header-controls {
+                width: 100%;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            
+            .encryption-controls {
+                padding: 6px 8px;
+                font-size: 0.85rem;
+            }
+            
+            .encryption-controls label {
+                font-size: 0.85rem;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .sidebar,
+            .note-list {
+                display: none;
+            }
+
+            .editor-toolbar {
+                padding: 8px 16px;
+                gap: 4px;
+                justify-content: flex-start;
+            }
+
+            .toolbar-group {
+                gap: 1px;
+                padding: 2px;
+            }
+
+            .toolbar-btn {
+                padding: 4px 6px;
+                font-size: 0.8rem;
+                min-width: 28px;
+            }
+
+            .editor-content {
+                padding: 16px;
+            }
+            
+            .editor-header {
+                padding: 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .editor-title-input {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Small mobile devices */
+        @media (max-width: 480px) {
+            .header {
+                padding: 8px 12px;
+            }
+            
+            .header-left {
+                gap: 8px;
+            }
+            
+            .search-container {
+                max-width: 120px;
+                min-width: 100px;
+            }
+            
+            .search-input {
+                padding: 4px 8px 4px 28px;
+                font-size: 14px;
+            }
+            
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            
+            .encryption-controls label {
+                display: none; /* Hide label text, keep checkbox */
+            }
+            
+            .btn {
+                padding: 4px 8px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* High contrast mode for accessibility */
+        @media (prefers-contrast: high) {
+            .note-item {
+                border: 2px solid #000;
+            }
+            
+            .note-item.active {
+                background: #000;
+                color: #fff;
+            }
+            
+            .toolbar-btn:hover {
+                border: 2px solid #000;
+            }
+        }
+
+        /* Reduced motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#editor" class="skip-link">Skip to main content</a>
+    <div class="app-container" role="application" aria-label="Notebook Application">
+                <div class="header">
+            <div class="header-left">
+                <h1>📝 Notebook</h1>
+                <div class="search-container">
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    <input type="text" class="search-input" placeholder="Search notes..." id="searchInput" 
+                           aria-label="Search through your notes" autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+            <div class="header-controls">
+                <div class="encryption-controls">
+                    <input type="checkbox" id="encryptionEnabled" onchange="toggleEncryption()" 
+                           aria-describedby="encryption-desc">
+                    <label for="encryptionEnabled">🔒 Encrypt Notebook</label>
+                    <span id="encryption-desc" class="sr-only">Enable password protection for your entire notebook</span>
+                </div>
+                <button class="btn btn-primary" onclick="downloadUpdatedFile()" 
+                        aria-label="Download and save your notebook file">💾 Save File</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h2>Categories</h2>
+                <div class="new-category-form">
+                    <input type="text" class="new-category-input" placeholder="New category" id="newCategoryInput">
+                    <button class="btn btn-primary" onclick="addCategory()">Add</button>
+                </div>
+                <ul class="category-list" id="categoryList">
+                    <!-- Categories will be added here -->
+                </ul>
+            </div>
+        </div>
+
+        <div class="note-list">
+            <div class="note-list-header">
+                <h2 class="note-list-title" id="noteListTitle">All Notes</h2>
+                <button class="btn btn-primary" onclick="createNewNote()">+ New Note</button>
+            </div>
+            <div class="note-items" id="noteItems">
+                <!-- Notes will be listed here -->
+            </div>
+        </div>
+
+        <div class="editor-panel">
+            <div class="editor-header">
+                <input type="text" class="editor-title-input" placeholder="Untitled Note" id="editorTitle">
+                <span class="encryption-indicator hidden" id="encryptionIndicator">🔒 Encrypted</span>
+                <select class="btn btn-secondary" id="noteCategorySelect">
+                    <!-- Categories will be populated here -->
+                </select>
+                <button class="btn btn-danger" onclick="deleteCurrentNote()" id="deleteNoteBtn">Delete</button>
+            </div>
+
+            <div class="editor-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold"><strong>B</strong></button>
+                    <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic"><em>I</em></button>
+                    <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline"><u>U</u></button>
+                    <button class="toolbar-btn" onclick="execCommand('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="formatHeading('h1')" title="Heading 1">H1</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h2')" title="Heading 2">H2</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h3')" title="Heading 3">H3</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">• List</button>
+                    <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">1. List</button>
+                    <button class="toolbar-btn" onclick="insertCodeBlock()" title="Code Block">&lt;/&gt;</button>
+                    <button class="toolbar-btn" onclick="insertQuote()" title="Quote">❝</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">⬅</button>
+                    <button class="toolbar-btn" onclick="execCommand('justifyCenter')" title="Center">⬄</button>
+                    <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">➡</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="createLink()" title="Insert Link">🔗</button>
+                    <button class="toolbar-btn" onclick="insertImage()" title="Insert Image">🖼</button>
+                    <button class="toolbar-btn" onclick="insertYouTubeVideo()" title="YouTube Video">📹</button>
+                    <button class="toolbar-btn" onclick="insertTable()" title="Insert Table">📊</button>
+                </div>
+            </div>
+
+            <div class="editor-content">
+                <div class="editor" contenteditable="true" id="editor" 
+                     role="textbox" aria-label="Note content editor" 
+                     aria-multiline="true" spellcheck="true"></div>
+            </div>
+
+            <div class="status-bar">
+                <div class="auto-save-indicator">
+                    <div class="save-dot" id="saveDot"></div>
+                    <span id="saveStatus">All changes saved</span>
+                </div>
+                <div id="wordCount">0 words</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // NOTES DATA - DO NOT EDIT MANUALLY
+        let NOTES_DATA = {"General":{"1734637200000":{"title":"Welcome to Notebook! 👋","content":"<h2>Getting Started</h2>\n                <p>Welcome to your new note-taking workspace! Here's how to get started:</p>\n                <ul>\n                <li><strong>Create notes:</strong> Click the \"New Note\" button</li>\n                <li><strong>Organize:</strong> Use categories to group your notes</li>\n                <li><strong>Search:</strong> Use the search bar to find notes quickly</li>\n                <li><strong>Format:</strong> Use the toolbar to style your text</li>\n                <li><strong>Encrypt:</strong> Enable notebook encryption for privacy</li>\n                </ul>\n                <p>Your notes are automatically saved as you type and work completely offline. Happy note-taking! ✨</p>","lastModified":"2024-12-20T00:00:00.000Z","encrypted":false}}};
+        let CATEGORIES_DATA = ["General"];
+        // END NOTES DATA
+
+        let notes = NOTES_DATA;
+        let categories = CATEGORIES_DATA;
+        let currentNote = null;
+        let currentCategory = 'General';
+        let searchQuery = '';
+        let autoSaveTimer = null;
+        let pendingChanges = false;
+        let encryptionEnabled = false;
+        let encryptionKey = null;
+        let notebookUnlocked = false;
+
+        // Initialize the app
+        async function init() {
+            // Check if notebook is encrypted
+            const hasEncryptedNotes = Object.values(notes).some(category => 
+                Object.values(category).some(note => note.encrypted)
+            );
+            
+            if (hasEncryptedNotes) {
+                encryptionEnabled = true;
+                document.getElementById('encryptionEnabled').checked = true;
+                
+                try {
+                    // Prompt for password to unlock the notebook
+                    const password = prompt('This notebook is encrypted. Enter your password to access it:');
+                    if (!password) {
+                        alert('Password required to access this notebook.');
+                        return;
+                    }
+                    
+                    // Decrypt all notes
+                    await unlockNotebook(password);
+                    notebookUnlocked = true;
+                    
+                } catch (e) {
+                    alert('Invalid password or corrupted data. Cannot access notebook.');
+                    return;
+                }
+            } else {
+                notebookUnlocked = true;
+            }
+            
+            updateCategoryList();
+            updateNoteList();
+            updateCategorySelect();
+            setupEventListeners();
+            
+            // Select the welcome note if it exists
+            const welcomeNoteId = Object.keys(notes['General'] || {})[0];
+            if (welcomeNoteId) {
+                selectNote(welcomeNoteId);
+            }
+        }
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                updateNoteList();
+            });
+
+            // Auto-save on content change
+            document.getElementById('editorTitle').addEventListener('input', scheduleAutoSave);
+            document.getElementById('editor').addEventListener('input', scheduleAutoSave);
+            
+            // Word count update
+            document.getElementById('editor').addEventListener('input', updateWordCount);
+            
+            // Category change
+            document.getElementById('noteCategorySelect').addEventListener('change', changeNoteCategory);
+
+            // Enter key for new category
+            document.getElementById('newCategoryInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addCategory();
+            });
+
+            // Warn user about unsaved changes when leaving
+            window.addEventListener('beforeunload', (e) => {
+                if (pendingChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Save your notebook before leaving.';
+                    return 'You have unsaved changes. Save your notebook before leaving.';
+                }
+            });
+        }
+
+        function scheduleAutoSave() {
+            setSaveStatus('saving');
+            pendingChanges = true;
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                if (currentNote) {
+                    saveCurrentNote();
+                    setSaveStatus('pending');
+                }
+            }, 1000);
+        }
+
+        function setSaveStatus(status) {
+            const dot = document.getElementById('saveDot');
+            const text = document.getElementById('saveStatus');
+            
+            if (status === 'saving') {
+                dot.classList.add('saving');
+                text.innerHTML = 'Saving...';
+            } else if (status === 'pending') {
+                dot.classList.remove('saving');
+                dot.style.background = '#f59e0b';
+                text.innerHTML = 'Changes ready - <button onclick="downloadUpdatedFile()" style="background:none;border:none;color:#3b82f6;cursor:pointer;text-decoration:underline;">Download File</button>';
+            } else {
+                dot.classList.remove('saving');
+                dot.style.background = '#10b981';
+                text.textContent = 'All changes saved';
+            }
+        }
+
+        function updateWordCount() {
+            const content = document.getElementById('editor').textContent || '';
+            const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCount').textContent = `${words} word${words !== 1 ? 's' : ''}`;
+        }
+
+        async function downloadUpdatedFile() {
+            // Get the current filename and path info
+            let filename = 'notebook.html';
+            let currentPath = '';
+            let isLocalFile = false;
+            
+            try {
+                const currentUrl = window.location.href;
+                if (currentUrl.startsWith('file://')) {
+                    isLocalFile = true;
+                    // Extract filename from file:// URL
+                    const pathParts = currentUrl.split('/');
+                    const lastPart = pathParts[pathParts.length - 1];
+                    if (lastPart && lastPart.endsWith('.html')) {
+                        filename = decodeURIComponent(lastPart);
+                    }
+                    
+                    // Get the directory path for display
+                    const fullPath = decodeURIComponent(currentUrl.replace('file://', ''));
+                    currentPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+                } else if (currentUrl.includes('/')) {
+                    // Extract filename from regular URL
+                    const pathParts = currentUrl.split('/');
+                    const lastPart = pathParts[pathParts.length - 1];
+                    if (lastPart && (lastPart.endsWith('.html') || lastPart.endsWith('.htm'))) {
+                        filename = lastPart;
+                    }
+                }
+            } catch (e) {
+                // Could not determine filename, using default
+            }
+            
+            // Show instructions before download for local files
+            if (isLocalFile) {
+                const proceed = confirm(
+                    `Save your notes to preserve changes!\n\n` +
+                    `Current file: ${filename}\n` +
+                    `Location: ${currentPath}\n\n` +
+                    `Instructions:\n` +
+                    `1. Click OK to download the updated file\n` +
+                    `2. Save it to replace the original file at the same location\n` +
+                    `3. Refresh this page to see your changes\n\n` +
+                    `Continue with download?`
+                );
+                
+                if (!proceed) {
+                    return; // User cancelled
+                }
+            }
+            
+            const htmlContent = await generateUpdatedHTML();
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            pendingChanges = false;
+            setSaveStatus('saved');
+        }
+
+        async function generateUpdatedHTML() {
+            // Get the current HTML content
+            let htmlContent = document.documentElement.outerHTML;
+            
+            // Prepare notes data for saving
+            let notesToSave = JSON.parse(JSON.stringify(notes)); // Deep copy
+            
+            // If encryption is enabled, encrypt all note contents before saving
+            if (encryptionEnabled && encryptionKey) {
+                for (const [categoryName, categoryNotes] of Object.entries(notesToSave)) {
+                    for (const [noteId, note] of Object.entries(categoryNotes)) {
+                        if (note.encrypted) {
+                            note.content = await encryptText(note.content, encryptionKey);
+                        }
+                    }
+                }
+            }
+            
+            // Find and replace the notes data section
+            const notesDataRegex = /\/\/ NOTES DATA - DO NOT EDIT MANUALLY[\s\S]*?\/\/ END NOTES DATA/;
+            
+            const newNotesData = `// NOTES DATA - DO NOT EDIT MANUALLY
+        let NOTES_DATA = ${JSON.stringify(notesToSave, null, 0)};
+        let CATEGORIES_DATA = ${JSON.stringify(categories, null, 0)};
+        // END NOTES DATA`;
+            
+            htmlContent = htmlContent.replace(notesDataRegex, newNotesData);
+            
+            return htmlContent;
+        }
+
+        function addCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const category = input.value.trim();
+            
+            if (category && !categories.includes(category)) {
+                categories.push(category);
+                updateCategoryList();
+                updateCategorySelect();
+                input.value = '';
+                scheduleAutoSave();
+            }
+        }
+
+        function deleteCategory(category) {
+            if (category === 'General') return;
+            
+            if (confirm(`Delete "${category}" category? Notes will be moved to General.`)) {
+                // Move notes to General
+                if (notes[category]) {
+                    if (!notes['General']) notes['General'] = {};
+                    Object.assign(notes['General'], notes[category]);
+                    delete notes[category];
+                }
+                
+                categories = categories.filter(c => c !== category);
+                
+                if (currentCategory === category) {
+                    currentCategory = 'General';
+                }
+                
+                updateCategoryList();
+                updateNoteList();
+                updateCategorySelect();
+                scheduleAutoSave();
+            }
+        }
+
+        function selectCategory(category) {
+            currentCategory = category;
+            updateCategoryList();
+            updateNoteList();
+            document.getElementById('noteListTitle').textContent = category;
+        }
+
+        function updateCategoryList() {
+            const list = document.getElementById('categoryList');
+            
+            list.innerHTML = categories.map(category => {
+                const noteCount = Object.keys(notes[category] || {}).length;
+                return `
+                    <li class="category-item ${category === currentCategory ? 'active' : ''}" 
+                        onclick="selectCategory('${category}')">
+                        <span class="category-name">${category}</span>
+                        <span class="note-count">${noteCount}</span>
+                        ${category !== 'General' ? 
+                            `<button class="delete-category" onclick="event.stopPropagation(); deleteCategory('${category}')">×</button>` 
+                            : ''}
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function updateCategorySelect() {
+            const select = document.getElementById('noteCategorySelect');
+            select.innerHTML = categories.map(category => 
+                `<option value="${category}">${category}</option>`
+            ).join('');
+            
+            if (currentNote) {
+                // Find which category the current note is in
+                for (const [cat, catNotes] of Object.entries(notes)) {
+                    if (catNotes[currentNote]) {
+                        select.value = cat;
+                        break;
+                    }
+                }
+            }
+        }
+
+        async function createNewNote() {
+            const noteId = Date.now().toString();
+            let title = 'Untitled Note';
+            let content = '';
+            let isEncrypted = false;
+            
+            if (!notes[currentCategory]) {
+                notes[currentCategory] = {};
+            }
+            
+            notes[currentCategory][noteId] = {
+                title,
+                content,
+                lastModified: new Date().toISOString(),
+                encrypted: encryptionEnabled
+            };
+            
+            selectNote(noteId);
+            updateNoteList();
+            scheduleAutoSave();
+            
+            // Focus on title input
+            setTimeout(() => {
+                document.getElementById('editorTitle').focus();
+                document.getElementById('editorTitle').select();
+            }, 100);
+        }
+
+        async function selectNote(noteId) {
+            // Find which category this note is in
+            let noteCategory = null;
+            let note = null;
+            
+            for (const [cat, catNotes] of Object.entries(notes)) {
+                if (catNotes[noteId]) {
+                    noteCategory = cat;
+                    note = catNotes[noteId];
+                    break;
+                }
+            }
+            
+            if (!note) return;
+            
+            currentNote = noteId;
+            currentCategory = noteCategory;
+            
+            // Since notebook is unlocked, all notes are accessible
+            document.getElementById('editorTitle').value = note.title;
+            document.getElementById('editor').innerHTML = note.content;
+            document.getElementById('noteCategorySelect').value = noteCategory;
+            
+            // Show encryption indicator if notebook is encrypted
+            if (encryptionEnabled) {
+                document.getElementById('encryptionIndicator').classList.remove('hidden');
+            } else {
+                document.getElementById('encryptionIndicator').classList.add('hidden');
+            }
+            
+            updateNoteList();
+            updateCategoryList();
+            updateWordCount();
+            
+            if (!pendingChanges) {
+                setSaveStatus('saved');
+            }
+        }
+
+        async function saveCurrentNote() {
+            if (!currentNote) return;
+            
+            const title = document.getElementById('editorTitle').value.trim() || 'Untitled Note';
+            const content = document.getElementById('editor').innerHTML;
+            
+            // Find current category of the note
+            let noteCategory = null;
+            for (const [cat, catNotes] of Object.entries(notes)) {
+                if (catNotes[currentNote]) {
+                    noteCategory = cat;
+                    break;
+                }
+            }
+            
+            if (noteCategory) {
+                // Save note (encryption will be applied when downloading/saving the file)
+                notes[noteCategory][currentNote] = {
+                    title: title,
+                    content: content,
+                    lastModified: new Date().toISOString(),
+                    encrypted: encryptionEnabled
+                };
+                
+                updateNoteList();
+                updateCategoryList();
+            }
+        }
+
+        function changeNoteCategory() {
+            if (!currentNote) return;
+            
+            const newCategory = document.getElementById('noteCategorySelect').value;
+            let oldCategory = null;
+            
+            // Find current category
+            for (const [cat, catNotes] of Object.entries(notes)) {
+                if (catNotes[currentNote]) {
+                    oldCategory = cat;
+                    break;
+                }
+            }
+            
+            if (oldCategory && oldCategory !== newCategory) {
+                const note = notes[oldCategory][currentNote];
+                delete notes[oldCategory][currentNote];
+                
+                if (!notes[newCategory]) {
+                    notes[newCategory] = {};
+                }
+                
+                notes[newCategory][currentNote] = note;
+                currentCategory = newCategory;
+                
+                updateNoteList();
+                updateCategoryList();
+                scheduleAutoSave();
+            }
+        }
+
+        function deleteCurrentNote() {
+            if (!currentNote) return;
+            
+            if (confirm('Delete this note? This cannot be undone.')) {
+                // Find and delete the note
+                for (const [cat, catNotes] of Object.entries(notes)) {
+                    if (catNotes[currentNote]) {
+                        delete catNotes[currentNote];
+                        break;
+                    }
+                }
+                
+                // Select another note or clear editor
+                const remainingNotes = Object.keys(notes[currentCategory] || {});
+                if (remainingNotes.length > 0) {
+                    selectNote(remainingNotes[0]);
+                } else {
+                    currentNote = null;
+                    document.getElementById('editorTitle').value = '';
+                    document.getElementById('editor').innerHTML = '';
+                }
+                
+                updateNoteList();
+                updateCategoryList();
+                scheduleAutoSave();
+            }
+        }
+
+        function updateNoteList() {
+            const container = document.getElementById('noteItems');
+            const categoryNotes = notes[currentCategory] || {};
+            
+            let filteredNotes = Object.entries(categoryNotes);
+            
+            // Apply search filter
+            if (searchQuery) {
+                filteredNotes = filteredNotes.filter(([id, note]) => {
+                    const titleMatch = note.title.toLowerCase().includes(searchQuery);
+                    const contentText = note.content.replace(/<[^>]*>/g, '').toLowerCase();
+                    const contentMatch = contentText.includes(searchQuery);
+                    return titleMatch || contentMatch;
+                });
+            }
+            
+            // Sort by last modified (newest first)
+            filteredNotes.sort(([,a], [,b]) => new Date(b.lastModified) - new Date(a.lastModified));
+            
+            if (filteredNotes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>${searchQuery ? 'No notes found' : 'No notes yet'}</p>
+                        ${!searchQuery ? '<p>Create your first note to get started!</p>' : ''}
+                    </div>
+                `;
+                            } else {
+                container.innerHTML = filteredNotes.map(([id, note]) => {
+                    const displayTitle = note.title || 'Untitled Note';
+                    const contentText = note.content.replace(/<[^>]*>/g, '');
+                    const preview = contentText.substring(0, 100);
+                    const wordCount = contentText.trim() ? contentText.trim().split(/\s+/).length : 0;
+                    const date = new Date(note.lastModified).toLocaleDateString();
+                    
+                    return `
+                        <div class="note-item ${id === currentNote ? 'active' : ''}" 
+                             onclick="selectNote('${id}')" role="button" tabindex="0">
+                            <div class="note-title">${displayTitle}</div>
+                            <div class="note-preview">${preview}${preview.length >= 100 ? '...' : ''}</div>
+                            <div class="note-meta">
+                                <span>${date}</span>
+                                <span>${wordCount} word${wordCount !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Rich text editor commands
+        function execCommand(command, value = null) {
+            document.execCommand(command, false, value);
+            scheduleAutoSave();
+        }
+
+        function formatHeading(tag) {
+            execCommand('formatBlock', tag);
+        }
+
+        function insertCodeBlock() {
+            const code = prompt('Enter your code:\n(You can paste multi-line code here)');
+            if (code) {
+                const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+                execCommand('insertHTML', codeBlock);
+            }
+        }
+
+        function insertQuote() {
+            const quote = prompt('Enter your quote or citation:');
+            if (quote) {
+                const quoteBlock = `<blockquote style="border-left: 4px solid #e2e8f0; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280;">${quote}</blockquote>`;
+                execCommand('insertHTML', quoteBlock);
+            }
+        }
+
+        function createLink() {
+            const url = prompt('Enter the URL:\n(Include http:// or https://)', 'https://');
+            if (url && url !== 'https://') {
+                execCommand('createLink', url);
+            }
+        }
+
+        function insertImage() {
+            const url = prompt('Enter image URL:\n(Supports JPG, PNG, GIF, WebP formats)', 'https://');
+            if (url && url !== 'https://') {
+                const img = `<img src="${url}" style="max-width: 100%; height: auto; border-radius: 4px; margin: 8px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Image" loading="lazy">`;
+                execCommand('insertHTML', img);
+            }
+        }
+
+        function insertYouTubeVideo() {
+            const url = prompt('Enter YouTube URL:', 'https://www.youtube.com/watch?v=');
+            if (url && url !== 'https://www.youtube.com/watch?v=') {
+                let videoId = '';
+                
+                // Extract video ID from various YouTube URL formats
+                const patterns = [
+                    /youtube\.com\/watch\?v=([^&]+)/,
+                    /youtu\.be\/([^?]+)/,
+                    /youtube\.com\/embed\/([^?]+)/
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = url.match(pattern);
+                    if (match) {
+                        videoId = match[1];
+                        break;
+                    }
+                }
+                
+                if (videoId) {
+                    // Create privacy-enhanced embed that works in private mode
+                    const embedHTML = `<div style="position: relative; width: 100%; max-width: 560px; height: 0; padding-bottom: 31.5%; margin: 16px auto; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"><iframe src="https://www.youtube-nocookie.com/embed/${videoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen loading="lazy"></iframe></div>`;
+                    execCommand('insertHTML', embedHTML);
+                } else {
+                    alert('Invalid YouTube URL. Please enter a valid YouTube link.');
+                }
+            }
+        }
+
+        function insertTable() {
+            const rows = parseInt(prompt('Number of rows:', '3'));
+            const cols = parseInt(prompt('Number of columns:', '3'));
+            
+            if (rows && cols && rows > 0 && cols > 0 && rows <= 20 && cols <= 10) {
+                let tableHTML = '<table style="border-collapse: collapse; width: 100%; margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">';
+                
+                for (let i = 0; i < rows; i++) {
+                    tableHTML += '<tr>';
+                    for (let j = 0; j < cols; j++) {
+                        const isHeader = i === 0;
+                        const cellStyle = `border: 1px solid #e2e8f0; padding: 12px; ${isHeader ? 'background: #f8fafc; font-weight: 600;' : ''}`;
+                        const cellContent = isHeader ? `Header ${j + 1}` : '';
+                        tableHTML += `<${isHeader ? 'th' : 'td'} style="${cellStyle}">${cellContent}</${isHeader ? 'th' : 'td'}>`;
+                    }
+                    tableHTML += '</tr>';
+                }
+                
+                tableHTML += '</table>';
+                execCommand('insertHTML', tableHTML);
+            } else if (rows > 20 || cols > 10) {
+                alert('Table size limited to 20 rows and 10 columns for performance.');
+            }
+        }
+
+        // Encryption functions
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveBits', 'deriveKey']
+            );
+            
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function encryptText(text, password) {
+            const encoder = new TextEncoder();
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(password, salt);
+            
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                encoder.encode(text)
+            );
+            
+            // Combine salt, iv, and encrypted data
+            const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            combined.set(salt, 0);
+            combined.set(iv, salt.length);
+            combined.set(new Uint8Array(encrypted), salt.length + iv.length);
+            
+            return btoa(String.fromCharCode.apply(null, combined));
+        }
+
+        async function decryptText(encryptedData, password) {
+            try {
+                const combined = new Uint8Array(atob(encryptedData).split('').map(c => c.charCodeAt(0)));
+                const salt = combined.slice(0, 16);
+                const iv = combined.slice(16, 28);
+                const encrypted = combined.slice(28);
+                
+                const key = await deriveKey(password, salt);
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    encrypted
+                );
+                
+                return new TextDecoder().decode(decrypted);
+            } catch (e) {
+                throw new Error('Decryption failed - invalid password or corrupted data');
+            }
+        }
+
+        async function unlockNotebook(password) {
+            // Decrypt all encrypted notes in the notebook
+            for (const [categoryName, categoryNotes] of Object.entries(notes)) {
+                for (const [noteId, note] of Object.entries(categoryNotes)) {
+                    if (note.encrypted) {
+                        note.content = await decryptText(note.content, password);
+                        note.encrypted = false;
+                    }
+                }
+            }
+            encryptionKey = password;
+        }
+
+
+
+        async function toggleEncryption() {
+            const checkbox = document.getElementById('encryptionEnabled');
+            const wasEnabled = encryptionEnabled;
+            encryptionEnabled = checkbox.checked;
+            
+            if (encryptionEnabled && !wasEnabled) {
+                // Enabling encryption for the entire notebook
+                const password = prompt('Enter a password for the notebook:\n\n⚠️ Important: Remember this password! You will need it to access this notebook.');
+                if (!password) {
+                    checkbox.checked = false;
+                    encryptionEnabled = false;
+                    return;
+                }
+                
+                if (password.length < 4) {
+                    alert('Password must be at least 4 characters long.');
+                    checkbox.checked = false;
+                    encryptionEnabled = false;
+                    return;
+                }
+                
+                encryptionKey = password;
+                
+                // Mark all notes as encrypted (encryption happens when saving)
+                for (const [categoryName, categoryNotes] of Object.entries(notes)) {
+                    for (const [noteId, note] of Object.entries(categoryNotes)) {
+                        note.encrypted = true;
+                    }
+                }
+                
+                scheduleAutoSave();
+                alert('Notebook encryption enabled! Notes will be encrypted when you save the file.');
+                
+            } else if (!encryptionEnabled && wasEnabled) {
+                // Disabling encryption
+                const confirmDisable = confirm('Disable notebook encryption? This will remove password protection from all notes.');
+                if (!confirmDisable) {
+                    checkbox.checked = true;
+                    encryptionEnabled = true;
+                    return;
+                }
+                
+                // Mark all notes as unencrypted
+                for (const [categoryName, categoryNotes] of Object.entries(notes)) {
+                    for (const [noteId, note] of Object.entries(categoryNotes)) {
+                        note.encrypted = false;
+                    }
+                }
+                
+                encryptionKey = null;
+                scheduleAutoSave();
+                alert('Notebook encryption disabled.');
+            }
+        }
+        // Initialize app
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html> 
