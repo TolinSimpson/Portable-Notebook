@@ -5,7 +5,6 @@ A lightweight, privacy-focused note-taking application that runs entirely in you
 ## ✨ Features
 
 - 🔒 Privacy First: All data stays on your device - no cloud, no tracking
-- 📱 Responsive Design: Works perfectly on desktop, tablet, and mobile
 - 📁 Smart Organization: Create unlimited categories to organize your notes
 - 🔍 Instant Search: Quickly find any note with real-time search
 - 🎨 Rich Text Editor: Format your notes with headings, lists, links, images, and more
@@ -13,7 +12,6 @@ A lightweight, privacy-focused note-taking application that runs entirely in you
 - 💾 Portable Format: Single HTML file that works offline anywhere
 - 📤 Import/Export: Backup and restore your notes easily
 - ⚡ Auto-save: Your changes are automatically saved as you type
-- 🎯 Keyboard Shortcuts: Efficient text formatting with familiar shortcuts
 
 ## 🚀 Quick Start
 
