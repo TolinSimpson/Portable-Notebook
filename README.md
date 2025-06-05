@@ -88,8 +88,8 @@ This generates `notebook-min.html` with:
 
 ## 📦 File Structure
 
-- `notebook.html` - Development version (readable, commented, 42KB)
-- `notebook-min.html` - Production version (minified, optimized, 33.5KB)
+- `notebook-dev.html` - Development version (readable, commented, 42KB)
+- `notebook.html` - Production version (minified, optimized, 33.5KB)
 - `minify-notebook.js` - Minification script
 - `package.json` - Project configuration and dependencies
 

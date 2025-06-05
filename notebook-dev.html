@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+    <title>📝 Notebook</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#334155;height:100vh;overflow:hidden;padding-bottom:70px}
+        .header{background:#fff;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.1);z-index:50;min-height:60px}
+        .header-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+        .header-title{font-size:1.25rem;font-weight:600;color:#1e293b;margin:0;white-space:nowrap}
+        .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+        .btn-icon{display:flex;align-items:center;justify-content:center;padding:8px;border-radius:6px;min-width:36px;min-height:36px;font-size:1rem;cursor:pointer;transition:all 0.2s;border:none}
+        .encryption-btn{background:#fef3c7;color:#92400e;border:1px solid #f59e0b}
+        .encryption-btn:hover{background:#fde68a}
+        .encryption-btn.active{background:#065f46;color:#fff;border-color:#065f46}
+        .btn{padding:8px 16px;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+        .btn-primary{background:#3b82f6;color:#fff}.btn-primary:hover{background:#2563eb}
+        .btn-secondary{background:#f1f5f9;color:#475569}.btn-secondary:hover{background:#e2e8f0}
+        .view{position:absolute;top:60px;left:0;right:0;bottom:70px;background:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+        .view.active{display:block}
+        .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,0.1)}
+        .nav-tabs{display:flex;height:70px;max-width:600px;margin:0 auto}
+        .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:none;border:none;color:#6b7280;font-size:0.875rem;cursor:pointer;transition:all 0.2s;gap:6px;padding:8px}
+        .nav-tab.active{color:#3b82f6;background:#eff6ff}
+        .nav-tab:hover{background:#f8fafc}
+        .nav-icon{font-size:1.4rem}
+        .editor{display:flex;flex-direction:column;height:100%}
+        .editor-header{padding:16px;border-bottom:1px solid #f1f5f9;background:#fff;position:sticky;top:0;z-index:10}
+        .note-title-display{font-size:1.1rem;font-weight:600;color:#1e293b;margin-bottom:12px}
+        .tag-management{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .note-tags{display:flex;flex-wrap:wrap;gap:6px}
+        .tag-item{display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:4px 8px;border-radius:12px;font-size:0.8rem;border:1px solid #0284c7}
+        .tag-remove{background:none;border:none;color:#0369a1;cursor:pointer;font-size:0.9rem;padding:0;margin-left:2px;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+        .tag-remove:hover{background:#0284c7;color:#fff}
+        .tags-display{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+        .tag-small{background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:8px;font-size:0.7rem;border:1px solid #0284c7}
+        .add-tag-btn{background:#10b981;color:#fff;padding:2px 6px;border-radius:8px;font-size:0.7rem;border:none;cursor:pointer;display:flex;align-items:center;gap:2px}
+        .add-tag-btn:hover{background:#059669}
+        .editor-toolbar{padding:8px 16px;border-bottom:1px solid #f1f5f9;background:#f8fafc;position:sticky;top:0;z-index:9;overflow-x:auto}
+        .toolbar-scroll{display:flex;gap:4px;min-width:max-content;padding-bottom:4px}
+        .toolbar-group{display:flex;gap:1px;padding:2px;border-radius:6px;background:#fff;border:1px solid #e2e8f0;flex-shrink:0}
+        .toolbar-btn{padding:6px 8px;border:none;background:transparent;border-radius:4px;cursor:pointer;font-size:0.8rem;transition:all 0.2s;white-space:nowrap;min-width:32px;display:flex;align-items:center;justify-content:center}
+        .toolbar-btn:hover{background:#f1f5f9;color:#3b82f6}
+        .toolbar-btn.active{background:#3b82f6;color:#fff}
+        .editor-content{flex:1;padding:16px;overflow-y:auto}
+        .editor-textarea{min-height:calc(100vh - 300px);outline:none;line-height:1.6;font-size:1rem;word-wrap:break-word;width:100%;border:none;background:none;resize:none}
+        .editor-textarea:empty::before{content:"Start writing your note...";color:#9ca3af}
+        .status-bar{padding:12px 16px;border-top:1px solid #f1f5f9;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#6b7280;position:sticky;bottom:0;z-index:10}
+        .notes-controls{padding:16px;border-bottom:1px solid #e2e8f0;background:#fff;position:sticky;top:0;z-index:10}
+        .search-section{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .search-input{flex:1;min-width:200px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;outline:none;transition:border-color 0.2s}
+        .search-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+        .filter-select{padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;background:#fff;outline:none;min-width:120px;cursor:pointer}
+        .filter-select:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+        .notes-list{padding:8px 0}
+        .note-item{position:relative;padding:16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background-color 0.2s}
+        .note-item:hover,.note-item:active{background:#f8fafc}
+        .note-item.active{background:#eff6ff;border-left:4px solid #3b82f6;padding-left:12px}
+        .note-content{padding-right:40px}
+        .note-title{font-size:1rem;font-weight:600;color:#1e293b;margin-bottom:8px;line-height:1.4}
+        .note-preview{font-size:0.875rem;color:#6b7280;line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .note-meta{display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:#9ca3af}
+        .note-delete{position:absolute;top:12px;right:12px;opacity:1;background:#fef2f2;border:none;color:#dc2626;cursor:pointer;padding:8px;border-radius:4px;font-size:1rem;transition:all 0.2s;z-index:10}
+        .note-delete:hover{background:#fecaca;color:#b91c1c;transform:scale(1.05)}
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;text-align:center;color:#6b7280;padding:40px 20px}
+        .empty-icon{font-size:3rem;margin-bottom:16px;opacity:0.5}
+        .auto-save-indicator{display:flex;align-items:center;gap:6px}
+        .save-dot{width:6px;height:6px;border-radius:50%;background:#10b981}
+        .save-dot.saving{background:#f59e0b;animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .menu-container{position:relative}
+        .menu-dropdown{position:absolute;top:100%;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:1000;min-width:200px;padding:8px 0;margin-top:4px;display:none}
+        .menu-dropdown.show{display:block}
+        .menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:12px 16px;border:none;background:none;text-align:left;font-size:14px;color:#374151;cursor:pointer;transition:background-color 0.2s}
+        .menu-item:hover{background:#f3f4f6}
+        .menu-separator{height:1px;background:#e5e7eb;margin:4px 0}
+        .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(2px)}
+        .modal-content{background:#fff;border-radius:12px;max-width:500px;width:90vw;max-height:80vh;overflow-y:auto;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)}
+        .modal-header{padding:24px 24px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between}
+        .modal-header h2{margin:0;font-size:1.5rem;font-weight:600;color:#1e293b}
+        .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;padding:4px;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+        .modal-close:hover{background:#f1f5f9;color:#374151}
+        .modal-body{padding:24px;line-height:1.6}
+        @media (max-width:768px){
+            .header{padding:10px 16px}
+            .header-title{font-size:1.1rem}
+            .header-left{gap:8px}
+            .header-actions{gap:6px}
+            .btn-icon{min-width:32px;min-height:32px;padding:6px;font-size:0.9rem}
+            .search-section{flex-direction:column;align-items:stretch}
+            .search-input{min-width:unset}
+            .filter-select{min-width:unset}
+        }
+        @media (max-width:480px){
+            .header{padding:8px 12px}
+            .header-title{font-size:1rem}
+            .header-left{gap:6px}
+            .header-actions{gap:4px}
+            .btn-icon{min-width:28px;min-height:28px;padding:4px;font-size:0.8rem}
+            .notes-controls{padding:12px}
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1 class="header-title">📝 Notebook</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn-icon encryption-btn" onclick="toggleEncryption()" id="encryptionBtn" title="Toggle encryption">🔒</button>
+            <div class="menu-container">
+                <button class="btn-icon btn-secondary" onclick="toggleMenu()" title="Menu">⚙️</button>
+                <div class="menu-dropdown" id="menuDropdown">
+                    <button class="menu-item" onclick="checkForUpdates()">🔄 Check for Updates</button>
+                    <div class="menu-separator"></div>
+                    <button class="menu-item" onclick="exportNotes()">📤 Export Notes</button>
+                    <button class="menu-item" onclick="importNotes()">📥 Import Notes</button>
+                    <div class="menu-separator"></div>
+                    <button class="menu-item" onclick="showAbout()">ℹ️ About</button>
+                </div>
+            </div>
+            <button class="btn-icon btn-primary" onclick="downloadUpdatedFile()" title="Save file">💾</button>
+        </div>
+    </div>
+
+    <!-- Hidden encryption checkbox for functionality -->
+    <input type="checkbox" id="encryptionEnabled" style="display:none">
+
+    <!--  Editor View -->
+    <div class="view active" id="EditorView">
+        <div class="editor">
+            <div class="editor-header">
+                <div class="note-title-display" id="noteTitleDisplay">Select a note to edit</div>
+                <div class="tag-management">
+                    <label for="tagSelect" style="font-size:0.9rem;color:#6b7280;margin-right:8px;">Tags:</label>
+                    <select class="btn btn-secondary" id="tagSelect" onchange="handleTagChange()">
+                        <option value="">Add tag...</option>
+                    </select>
+                    <div class="note-tags" id="noteTags"></div>
+                </div>
+            </div>
+            <div class="editor-toolbar">
+                <div class="toolbar-scroll">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="ToggleFormat('bold')" data-format="bold" title="Bold"><strong>B</strong></button>
+                        <button class="toolbar-btn" onclick="ToggleFormat('italic')" data-format="italic" title="Italic"><em>I</em></button>
+                        <button class="toolbar-btn" onclick="ToggleFormat('underline')" data-format="underline" title="Underline"><u>U</u></button>
+                        <button class="toolbar-btn" onclick="ToggleFormat('strikeThrough')" data-format="strikeThrough" title="Strikethrough"><s>S</s></button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="FormatHeading('h1')" data-format="h1" title="Heading 1">H1</button>
+                        <button class="toolbar-btn" onclick="FormatHeading('h2')" data-format="h2" title="Heading 2">H2</button>
+                        <button class="toolbar-btn" onclick="FormatHeading('h3')" data-format="h3" title="Heading 3">H3</button>
+                        <button class="toolbar-btn" onclick="FormatHeading('p')" data-format="p" title="Paragraph">P</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="ToggleFormat('insertUnorderedList')" data-format="insertUnorderedList" title="Bullet List">• List</button>
+                        <button class="toolbar-btn" onclick="ToggleFormat('insertOrderedList')" data-format="insertOrderedList" title="Numbered List">1. List</button>
+                        <button class="toolbar-btn" onclick="ToggleCodeFormat()" data-format="code" title="Code">&lt;/&gt;</button>
+                        <button class="toolbar-btn" onclick="ToggleQuoteFormat()" data-format="quote" title="Quote">❝</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="CreateLink()" data-format="createLink" title="Insert Link">🔗</button>
+                        <button class="toolbar-btn" onclick="InsertImage()" title="Insert Image">🖼</button>
+                        <button class="toolbar-btn" onclick="InsertYouTubeVideo()" title="Insert YouTube Video">📹</button>
+                        <button class="toolbar-btn" onclick="InsertTable()" title="Insert Table">📊</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="ClearFormatting()" title="Clear Formatting">🧹</button>
+                        <button class="toolbar-btn" onclick="InsertLineBreak()" title="Insert Line Break">↵</button>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-content">
+                <div class="editor-textarea" contenteditable="true" id="Editor"></div>
+            </div>
+            <div class="status-bar">
+                <div class="auto-save-indicator">
+                    <div class="save-dot" id="SaveDot"></div>
+                    <span id="SaveStatus">All changes saved</span>
+                </div>
+                <div id="WordCount">0 words</div>
+            </div>
+        </div>
+    </div>
+
+    <!--  Notes View -->
+    <div class="view" id="NotesView">
+        <div class="notes-controls">
+            <div class="search-section">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search notes..." onkeyup="searchNotes()">
+                <select class="filter-select" id="tagFilter" onchange="filterNotesByTag()">
+                    <option value="">All Tags</option>
+                </select>
+                <button class="btn btn-primary" onclick="createNote()">📝 New Note</button>
+            </div>
+        </div>
+        <div class="notes-list" id="NotesList"></div>
+    </div>
+
+    <!--  Bottom Navigation -->
+    <div class="nav">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showView('editor')" data-view="editor">
+                <div class="nav-icon">✏️</div>
+                <div>Editor</div>
+            </button>
+            <button class="nav-tab" onclick="showView('notes')" data-view="notes">
+                <div class="nav-icon">📄</div>
+                <div>Notes</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal-overlay" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About Portable Notebook</h2>
+                <button class="modal-close" onclick="closeAboutModal()">×</button>
+            </div>
+            <div class="modal-body" id="aboutModalBody"></div>
+        </div>
+    </div>
+
+    <script>
+// NOTES DATA - DO NOT EDIT MANUALLY
+let NOTES_DATA = {"1734637200000":{"title":"Welcome to Notebook! 👋","content":"<h2>Getting Started</h2><p>Welcome to your new note-taking workspace! Here's how to get started:</p><ul><li><strong>Create notes:</strong> Click the \"New Note\" button</li><li><strong>Organize:</strong> Use tags to organize your notes</li><li><strong>Format:</strong> Use the toolbar to style your text</li><li><strong>Encrypt:</strong> Enable notebook encryption for privacy</li></ul><p>Your notes are automatically saved as you type and work completely offline. Happy note-taking! ✨</p>","lastModified":"2024-12-20T00:00:00.000Z","encrypted":false,"tags":["welcome","getting-started"]}};
+let TAGS_DATA = ["welcome","getting-started"];
+// END NOTES DATA
+
+// Repository configuration
+const REPO_BASE_URL = 'https://github.com/TolinSimpson/Portable-Notebook';
+const CURRENT_VERSION = '1.0.0';
+
+// Global state
+let notes=NOTES_DATA,tags=TAGS_DATA,currentNote=null,autoSaveTimer=null,pendingChanges=false,encryptionEnabled=false,encryptionKey=null;
+
+// Helper functions
+function updateAllViews(){updateNotesList();updateTagSelect();updateNoteDisplay();}
+
+// Initialize app
+async function init(){
+// Check if notebook is encrypted
+const hasEncryptedNotes=Object.values(notes).some(note=>note.encrypted);
+if(hasEncryptedNotes){
+encryptionEnabled=true;
+document.getElementById('encryptionEnabled').checked=true;
+document.getElementById('encryptionBtn').classList.add('active');
+document.getElementById('encryptionBtn').title='Encryption enabled - click to disable';
+try{
+const password=prompt('This notebook is encrypted. Enter your password to access it:');
+if(!password){alert('Password required to access this notebook.');return;}
+await unlockNotebook(password);
+}catch(e){alert('Invalid password or corrupted data. Cannot access notebook.');return;}
+}
+showView('editor');updateTagSelect();updateNotesList();setupEventListeners();const welcomeNoteId=Object.keys(notes)[0];if(welcomeNoteId){SelectNote(welcomeNoteId);}}
+
+function setupEventListeners(){const Editor=document.getElementById('Editor');Editor.addEventListener('input',()=>{UpdateWordCount();ScheduleAutoSave();});Editor.addEventListener('keyup',UpdateToolbarState);Editor.addEventListener('mouseup',UpdateToolbarState);document.addEventListener('click',(e)=>{const menuContainer=document.querySelector('.menu-container'),menuDropdown=document.getElementById('menuDropdown');if(!menuContainer.contains(e.target))menuDropdown.classList.remove('show');});}
+
+function ScheduleAutoSave(){setSaveStatus('saving');pendingChanges=true;clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>{if(currentNote){saveCurrentNote();setSaveStatus('pending');}},1000);}
+
+function setSaveStatus(status){const dot=document.getElementById('SaveDot'),text=document.getElementById('SaveStatus');if(status==='saving'){dot.classList.add('saving');text.innerHTML='Saving...';}else if(status==='pending'){dot.classList.remove('saving');dot.style.background='#f59e0b';text.innerHTML='Changes ready - <button onclick="downloadUpdatedFile()" style="background:none;border:none;color:#3b82f6;cursor:pointer;text-decoration:underline;">Download File</button>';}else{dot.classList.remove('saving');dot.style.background='#10b981';text.textContent='All changes saved';}}
+
+function UpdateWordCount(){const content=document.getElementById('Editor').textContent||'';const words=content.trim()?content.trim().split(/\s+/).length:0;document.getElementById('WordCount').textContent=`${words} word${words!==1?'s':''}`;}
+
+async function downloadUpdatedFile(){let notesToSave=JSON.parse(JSON.stringify(notes));if(encryptionEnabled&&encryptionKey){for(const[noteId,note]of Object.entries(notesToSave)){if(note.encrypted){note.content=await encryptText(note.content,encryptionKey);}}}const notesDataRegex=/\/\/ NOTES DATA - DO NOT EDIT MANUALLY[\s\S]*?\/\/ END NOTES DATA/;const newNotesData=`// NOTES DATA - DO NOT EDIT MANUALLY\nlet NOTES_DATA = ${JSON.stringify(notesToSave)};\nlet TAGS_DATA = ${JSON.stringify(tags)};\n// END NOTES DATA`;const htmlContent=document.documentElement.outerHTML.replace(notesDataRegex,newNotesData);const blob=new Blob([htmlContent],{type:'text/html'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='notebook.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);pendingChanges=false;setSaveStatus('saved');}
+
+async function saveCurrentNote(){if(!currentNote||!notes[currentNote])return;const note=notes[currentNote];notes[currentNote]={...note,content:document.getElementById('Editor').innerHTML,lastModified:new Date().toISOString(),encrypted:encryptionEnabled};updateNotesList();}
+
+function showView(view){document.querySelectorAll('.nav-tab').forEach(tab=>tab.classList.remove('active'));document.querySelector(`[data-view="${view}"]`).classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(`${view.charAt(0).toUpperCase()+view.slice(1)}View`).classList.add('active');if(view==='notes'){updateNotesList();updateTagFilter();}}
+
+function updateNotesList(){const container=document.getElementById('NotesList');const searchInput=document.getElementById('searchInput');const tagFilter=document.getElementById('tagFilter');const searchTerm=searchInput?searchInput.value.toLowerCase():'';const selectedTag=tagFilter?tagFilter.value:'';let allNotes=Object.entries(notes).map(([id,note])=>({id,note}));// Apply search filter
+if(searchTerm){allNotes=allNotes.filter(({note})=>{const title=(note.title||'').toLowerCase();const content=note.content.replace(/<[^>]*>/g,'').toLowerCase();const tags=(note.tags||[]).join(' ').toLowerCase();return title.includes(searchTerm)||content.includes(searchTerm)||tags.includes(searchTerm);});}// Apply tag filter
+if(selectedTag){allNotes=allNotes.filter(({note})=>(note.tags||[]).includes(selectedTag));}allNotes.sort((a,b)=>new Date(b.note.lastModified)-new Date(a.note.lastModified));container.innerHTML=allNotes.length?allNotes.map(({id,note})=>{const displayTitle=note.title||'Untitled Note',contentText=note.content.replace(/<[^>]*>/g,''),preview=contentText.substring(0,100),wordCount=contentText.trim()?contentText.trim().split(/\s+/).length:0,date=new Date(note.lastModified).toLocaleDateString(),noteTags=note.tags||[];const tagsHTML=noteTags.map(tag=>`<span class="tag-small">${tag}</span>`).join('')+`<button class="add-tag-btn" onclick="event.stopPropagation();promptAddTag('${id}')" title="Add tag">+ Tag</button>`;return`<div class="note-item ${id===currentNote?'active':''}" onclick="SelectNote('${id}')"><button class="note-delete" onclick="event.stopPropagation();deleteNote('${id}')" title="Delete note">🗑️</button><div class="note-content"><div class="note-title">${displayTitle}</div><div class="note-preview">${preview}${preview.length>=100?'...':''}</div><div class="note-meta"><span>${date}</span><span>${wordCount} word${wordCount!==1?'s':''}</span></div><div class="tags-display">${tagsHTML}</div></div></div>`;}).join(''):`<div class="empty-state"><div class="empty-icon">📝</div><p>No notes yet</p></div>`;}
+
+function updateTagSelect(){const select=document.getElementById('tagSelect');if(!select)return;select.innerHTML='<option value="">Add tag...</option>'+tags.map(tag=>`<option value="${tag}">${tag}</option>`).join('');}
+
+function updateTagFilter(){const filter=document.getElementById('tagFilter');if(!filter)return;filter.innerHTML='<option value="">All Tags</option>'+tags.map(tag=>`<option value="${tag}">${tag}</option>`).join('');}
+
+function searchNotes(){updateNotesList();}
+
+function filterNotesByTag(){updateNotesList();}
+
+function handleTagChange(){const select=document.getElementById('tagSelect');const selectedTag=select.value;if(selectedTag&&currentNote){addTagToNote(currentNote,selectedTag);select.value='';updateNoteDisplay();updateNotesList();ScheduleAutoSave();}}
+
+function addTagToNote(noteId,tag){if(!notes[noteId])return;if(!notes[noteId].tags)notes[noteId].tags=[];if(!notes[noteId].tags.includes(tag)){notes[noteId].tags.push(tag);if(!tags.includes(tag)){tags.push(tag);updateTagSelect();updateTagFilter();}}}
+
+function removeTagFromNote(noteId,tag){if(!notes[noteId]||!notes[noteId].tags)return;notes[noteId].tags=notes[noteId].tags.filter(t=>t!==tag);updateNoteDisplay();updateNotesList();ScheduleAutoSave();}
+
+function updateNoteDisplay(){const titleDisplay=document.getElementById('noteTitleDisplay');const noteTagsContainer=document.getElementById('noteTags');if(currentNote&&notes[currentNote]){titleDisplay.textContent=notes[currentNote].title||'Untitled Note';const noteTags=notes[currentNote].tags||[];noteTagsContainer.innerHTML=noteTags.map(tag=>`<span class="tag-item">${tag}<button class="tag-remove" onclick="removeTagFromNote('${currentNote}','${tag}')" title="Remove tag">×</button></span>`).join('');}else{titleDisplay.textContent='Select a note to edit';noteTagsContainer.innerHTML='';}}
+
+function promptAddTag(noteId){const tag=prompt('Enter tag name:');if(tag&&tag.trim()){addTagToNote(noteId,tag.trim());updateNotesList();ScheduleAutoSave();}}
+
+function deleteNote(noteId){if(!confirm('Delete this note? This cannot be undone.'))return;delete notes[noteId];if(currentNote===noteId){const remainingNotes=Object.keys(notes);if(remainingNotes.length>0)SelectNote(remainingNotes[0]);else{currentNote=null;document.getElementById('Editor').innerHTML='';updateNoteDisplay();}}updateNotesList();ScheduleAutoSave();}
+
+function SelectNote(noteId){if(!notes[noteId])return;const note=notes[noteId];currentNote=noteId;document.getElementById('Editor').innerHTML=note.content;updateAllViews();UpdateWordCount();if(!pendingChanges)setSaveStatus('saved');showView('editor');}
+
+function createNote(){const title=prompt('Enter note title:');if(!title||!title.trim())return;const noteId=Date.now().toString();notes[noteId]={title:title.trim(),content:'',lastModified:new Date().toISOString(),encrypted:encryptionEnabled,tags:[]};SelectNote(noteId);updateNotesList();ScheduleAutoSave();}
+
+
+
+function ToggleFormat(command){document.getElementById('Editor').focus();document.execCommand(command,false,null);UpdateToolbarState();ScheduleAutoSave();}
+
+function FormatHeading(tag){document.getElementById('Editor').focus();document.execCommand('formatBlock',false,tag);UpdateToolbarState();ScheduleAutoSave();}
+
+function CreateLink(){document.getElementById('Editor').focus();const selection=window.getSelection();if(selection.rangeCount>0){const range=selection.getRangeAt(0);const selectedText=selection.toString();// Check if selection contains or is within a link
+let linkElement=null;if(selectedText){// Check if selected text contains a link
+const tempDiv=document.createElement('div');tempDiv.appendChild(range.cloneContents());linkElement=tempDiv.querySelector('a');if(!linkElement){// Check if selection is within a link
+let parentElement=range.commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;linkElement=parentElement.closest('a');}}else{// No selection, check if cursor is within a link
+let parentElement=range.commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;linkElement=parentElement.closest('a');}if(linkElement){// Remove link formatting
+if(selectedText&&linkElement.textContent!==selectedText){// Selected text is part of a larger link, just remove the link from entire element
+const textContent=linkElement.textContent;const textNode=document.createTextNode(textContent);linkElement.parentNode.replaceChild(textNode,linkElement);}else{// Remove the entire link element
+const textContent=linkElement.textContent;const textNode=document.createTextNode(textContent);linkElement.parentNode.replaceChild(textNode,linkElement);}}else{// Add new link
+if(selectedText){const url=prompt('Enter URL:','https://');if(url&&url!=='https://'){document.execCommand('insertHTML',false,`<a href="${url}" target="_blank" rel="noopener noreferrer">${selectedText}</a>`);}}else{const url=prompt('Enter URL:','https://');if(url&&url!=='https://'){const text=prompt('Enter link text:');if(text){document.execCommand('insertHTML',false,`<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`);}}}}}UpdateToolbarState();ScheduleAutoSave();}
+
+function InsertImage(){const url=prompt('Enter image URL:','https://');if(url&&url!=='https://'){document.getElementById('Editor').focus();document.execCommand('insertHTML',false,`<img src="${url}" style="max-width:100%;height:auto;border-radius:4px;margin:8px 0;" alt="Image">`);ScheduleAutoSave();}}
+
+function ToggleCodeFormat(){document.getElementById('Editor').focus();const selection=window.getSelection();if(selection.rangeCount>0){const range=selection.getRangeAt(0);const selectedText=selection.toString();// Check if selection is within existing code elements
+let parentElement=range.commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;const codeElement=parentElement.closest('code, pre');if(codeElement){// Remove code formatting
+const textContent=codeElement.textContent;const textNode=document.createTextNode(textContent);codeElement.parentNode.replaceChild(textNode,codeElement);// Restore selection
+const newRange=document.createRange();newRange.selectNodeContents(textNode);selection.removeAllRanges();selection.addRange(newRange);}else if(selectedText){// Add code formatting
+const makeBlock=selectedText.includes('\n')||confirm('Create code block? (Cancel for inline code)');const code=makeBlock?`<pre style="background:#f4f4f4;padding:12px;border-radius:4px;border-left:4px solid #3b82f6;margin:12px 0;"><code>${selectedText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`:`<code style="background:#f1f5f9;padding:2px 4px;border-radius:3px;font-family:Monaco,monospace;">${selectedText.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code>`;document.execCommand('insertHTML',false,code);}else{// No selection, prompt for code
+const code=prompt('Enter code:');if(code){const codeHTML=code.includes('\n')?`<pre style="background:#f4f4f4;padding:12px;border-radius:4px;border-left:4px solid #3b82f6;margin:12px 0;"><code>${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`:`<code style="background:#f1f5f9;padding:2px 4px;border-radius:3px;font-family:Monaco,monospace;">${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code>`;document.execCommand('insertHTML',false,codeHTML);}}}UpdateToolbarState();ScheduleAutoSave();}
+
+function ToggleQuoteFormat(){document.getElementById('Editor').focus();const selection=window.getSelection();if(selection.rangeCount>0){const range=selection.getRangeAt(0);const selectedText=selection.toString();// Check if selection is within existing blockquote
+let parentElement=range.commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;const quoteElement=parentElement.closest('blockquote');if(quoteElement){// Remove quote formatting
+const textContent=quoteElement.textContent;const textNode=document.createTextNode(textContent);quoteElement.parentNode.replaceChild(textNode,quoteElement);// Restore selection
+const newRange=document.createRange();newRange.selectNodeContents(textNode);selection.removeAllRanges();selection.addRange(newRange);}else if(selectedText){// Add quote formatting
+document.execCommand('insertHTML',false,`<blockquote style="border-left:4px solid #3b82f6;padding:12px 16px;margin:16px 0;font-style:italic;color:#6b7280;background:#f8fafc;">${selectedText}</blockquote>`);}else{// No selection, prompt for quote
+const quote=prompt('Enter quote:');if(quote)document.execCommand('insertHTML',false,`<blockquote style="border-left:4px solid #3b82f6;padding:12px 16px;margin:16px 0;font-style:italic;color:#6b7280;background:#f8fafc;">${quote}</blockquote>`);}UpdateToolbarState();ScheduleAutoSave();}}
+
+function InsertYouTubeVideo(){const url=prompt('Enter YouTube URL:','https://www.youtube.com/watch?v=');if(url&&url!=='https://www.youtube.com/watch?v='){const match=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);if(match){document.getElementById('Editor').focus();document.execCommand('insertHTML',false,`<div style="position:relative;width:100%;max-width:560px;height:0;padding-bottom:31.5%;margin:16px auto;"><iframe src="https://www.youtube-nocookie.com/embed/${match[1]}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" allowfullscreen></iframe></div>`);ScheduleAutoSave();}else alert('Invalid YouTube URL.');}}
+
+function InsertTable(){const rows=parseInt(prompt('Rows:','3')),cols=parseInt(prompt('Columns:','3'));if(rows&&cols&&rows<=20&&cols<=10){let table='<table style="border-collapse:collapse;width:100%;margin:16px 0;border:1px solid #e2e8f0;">';for(let i=0;i<rows;i++){table+='<tr>';for(let j=0;j<cols;j++){const isHeader=i===0;table+=`<${isHeader?'th':'td'} style="border:1px solid #e2e8f0;padding:12px;${isHeader?'background:#f8fafc;font-weight:600;':''}}">${isHeader?`Header ${j+1}`:''}</${isHeader?'th':'td'}>`;}table+='</tr>';}table+='</table>';document.getElementById('Editor').focus();document.execCommand('insertHTML',false,table);ScheduleAutoSave();}}
+
+function ClearFormatting(){const editor=document.getElementById('Editor');editor.focus();const selection=window.getSelection();if(selection.isCollapsed){const range=document.createRange();range.selectNodeContents(editor);selection.removeAllRanges();selection.addRange(range);}document.execCommand('removeFormat');document.execCommand('formatBlock',false,'p');UpdateToolbarState();ScheduleAutoSave();}
+
+function InsertLineBreak(){const editor=document.getElementById('Editor');editor.focus();document.execCommand('insertHTML',false,'<br>');ScheduleAutoSave();}
+
+function UpdateToolbarState(){document.querySelectorAll('.toolbar-btn[data-format]').forEach(button=>{button.classList.remove('active');const format=button.getAttribute('data-format');if(['h1','h2','h3','p'].includes(format)){const blockFormat=document.queryCommandValue('formatBlock').toLowerCase();if(blockFormat===format||(format==='p'&&!blockFormat))button.classList.add('active');}else if(['bold','italic','underline','strikeThrough'].includes(format)){if(document.queryCommandState(format))button.classList.add('active');}else if(['insertUnorderedList','insertOrderedList'].includes(format)){if(document.queryCommandState(format))button.classList.add('active');}else if(format==='code'){// Check if cursor is within code element
+const selection=window.getSelection();if(selection.rangeCount>0){let parentElement=selection.getRangeAt(0).commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;if(parentElement.closest('code, pre'))button.classList.add('active');}}else if(format==='quote'){// Check if cursor is within blockquote element
+const selection=window.getSelection();if(selection.rangeCount>0){let parentElement=selection.getRangeAt(0).commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;if(parentElement.closest('blockquote'))button.classList.add('active');}}else if(format==='createLink'){// Check if cursor is within link element
+const selection=window.getSelection();if(selection.rangeCount>0){let parentElement=selection.getRangeAt(0).commonAncestorContainer;if(parentElement.nodeType===Node.TEXT_NODE)parentElement=parentElement.parentNode;if(parentElement.closest('a'))button.classList.add('active');}}});}
+
+// Encryption functions
+async function deriveKey(password,salt){const encoder=new TextEncoder();const keyMaterial=await crypto.subtle.importKey('raw',encoder.encode(password),{name:'PBKDF2'},false,['deriveBits','deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:100000,hash:'SHA-256'},keyMaterial,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+
+async function encryptText(text,password){const encoder=new TextEncoder();const salt=crypto.getRandomValues(new Uint8Array(16));const iv=crypto.getRandomValues(new Uint8Array(12));const key=await deriveKey(password,salt);const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,encoder.encode(text));const combined=new Uint8Array(salt.length+iv.length+encrypted.byteLength);combined.set(salt,0);combined.set(iv,salt.length);combined.set(new Uint8Array(encrypted),salt.length+iv.length);return btoa(String.fromCharCode.apply(null,combined));}
+
+async function decryptText(encryptedData,password){try{const combined=new Uint8Array(atob(encryptedData).split('').map(c=>c.charCodeAt(0)));const salt=combined.slice(0,16);const iv=combined.slice(16,28);const encrypted=combined.slice(28);const key=await deriveKey(password,salt);const decrypted=await crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,encrypted);return new TextDecoder().decode(decrypted);}catch(e){throw new Error('Decryption failed');}}
+
+async function unlockNotebook(password){for(const[noteId,note]of Object.entries(notes)){if(note.encrypted){note.content=await decryptText(note.content,password);note.encrypted=false;}}encryptionKey=password;}
+
+async function toggleEncryption(){const checkbox=document.getElementById('encryptionEnabled');const btn=document.getElementById('encryptionBtn');const wasEnabled=encryptionEnabled;if(!encryptionEnabled){const password=prompt('Enter password for notebook:');if(!password||password.length<4){alert(password?'Password must be at least 4 characters long.':'Password required.');return;}encryptionKey=password;encryptionEnabled=true;checkbox.checked=true;btn.classList.add('active');btn.title='Encryption enabled - click to disable';for(const note of Object.values(notes))note.encrypted=true;ScheduleAutoSave();alert('Encryption enabled!');}else{if(!confirm('Disable encryption? This removes password protection.'))return;encryptionEnabled=false;checkbox.checked=false;btn.classList.remove('active');btn.title='Toggle encryption';for(const note of Object.values(notes))note.encrypted=false;encryptionKey=null;ScheduleAutoSave();alert('Encryption disabled.');}}
+
+function toggleMenu(){document.getElementById('menuDropdown').classList.toggle('show');}
+
+async function checkForUpdates(){const repoUrl=`${REPO_BASE_URL}/releases`;try{const apiUrl=REPO_BASE_URL.replace('https://github.com/','https://api.github.com/repos/');const response=await fetch(`${apiUrl}/releases/latest`);if(!response.ok)throw new Error(`GitHub API responded with status: ${response.status}`);const release=await response.json();const latestVersion=release.tag_name.replace(/^v./,'');if(compareVersions(latestVersion,CURRENT_VERSION)>0){const updateMessage=`🆕 Update Available!\n\nCurrent version: ${CURRENT_VERSION}\nLatest version: ${latestVersion}\n\nRelease: ${release.name}\n\nWould you like to open the releases page to download the update?`;if(confirm(updateMessage))window.open(repoUrl,'_blank','noopener,noreferrer');}else{alert(`✅ You're up to date!\n\nCurrent version: ${CURRENT_VERSION}\nLatest version: ${latestVersion}`);}}catch(error){console.error('Error checking for updates:',error);const fallbackMessage=`❌ Could not check for updates automatically.\n\nError: ${error.message}\n\nWould you like to open the releases page manually?`;if(confirm(fallbackMessage))window.open(repoUrl,'_blank','noopener,noreferrer');}document.getElementById('menuDropdown').classList.remove('show');}
+
+function compareVersions(version1,version2){const v1parts=version1.split('.').map(Number);const v2parts=version2.split('.').map(Number);const maxLength=Math.max(v1parts.length,v2parts.length);while(v1parts.length<maxLength)v1parts.push(0);while(v2parts.length<maxLength)v2parts.push(0);for(let i=0;i<maxLength;i++){if(v1parts[i]>v2parts[i])return 1;if(v1parts[i]<v2parts[i])return -1;}return 0;}
+
+function exportNotes(){try{const exportData={version:'1.0',exportDate:new Date().toISOString(),notes,tags,encrypted:encryptionEnabled},blob=new Blob([JSON.stringify(exportData,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`notebook-export-${new Date().toISOString().split('T')[0]}.json`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);alert('Notes exported!');}catch(e){alert('Export error: '+e.message);}document.getElementById('menuDropdown').classList.remove('show');}
+
+function importNotes(){const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const text=await file.text(),importData=JSON.parse(text);if(!importData.notes)throw new Error('Invalid file format');const overwrite=confirm('Replace all notes (OK) or merge (Cancel)?');if(overwrite){notes=importData.notes;tags=importData.tags||[];}else{Object.assign(notes,importData.notes);if(importData.tags){importData.tags.forEach(tag=>{if(!tags.includes(tag))tags.push(tag);});}}currentNote=null;updateTagSelect();updateNotesList();updateNoteDisplay();document.getElementById('Editor').innerHTML='';ScheduleAutoSave();alert('Import successful!');}catch(e){alert('Import error: '+e.message);}};input.click();document.getElementById('menuDropdown').classList.remove('show');}
+
+function showAbout(){const modalBody=document.getElementById('aboutModalBody');modalBody.innerHTML=`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;"><h3>📝 Portable Notebook Compact v${CURRENT_VERSION}</h3><p><strong>Original Creator:</strong> Tolin Simpson</p><p><strong>Repository:</strong> <a href="${REPO_BASE_URL}" target="_blank">GitHub</a></p><p><strong>License:</strong> <a href="${REPO_BASE_URL}/tree/main?tab=MIT-1-ov-file#readme" target="_blank">MIT</a></p></div>`;document.getElementById('aboutModal').style.display='flex';document.getElementById('menuDropdown').classList.remove('show');}
+
+function closeAboutModal(){document.getElementById('aboutModal').style.display='none';}
+
+window.addEventListener('load',init);
+    </script>
+</body>
+</html>
