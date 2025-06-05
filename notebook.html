@@ -922,21 +922,22 @@
 
             <div class="editor-toolbar">
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold"><strong>B</strong></button>
-                    <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic"><em>I</em></button>
-                    <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline"><u>U</u></button>
-                    <button class="toolbar-btn" onclick="execCommand('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                    <button class="toolbar-btn" onclick="toggleFormat('bold')" title="Bold" data-format="bold"><strong>B</strong></button>
+                    <button class="toolbar-btn" onclick="toggleFormat('italic')" title="Italic" data-format="italic"><em>I</em></button>
+                    <button class="toolbar-btn" onclick="toggleFormat('underline')" title="Underline" data-format="underline"><u>U</u></button>
+                    <button class="toolbar-btn" onclick="toggleFormat('strikeThrough')" title="Strikethrough" data-format="strikeThrough"><s>S</s></button>
                 </div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" onclick="formatHeading('h1')" title="Heading 1">H1</button>
-                    <button class="toolbar-btn" onclick="formatHeading('h2')" title="Heading 2">H2</button>
-                    <button class="toolbar-btn" onclick="formatHeading('h3')" title="Heading 3">H3</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h1')" title="Heading 1" data-format="h1">H1</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h2')" title="Heading 2" data-format="h2">H2</button>
+                    <button class="toolbar-btn" onclick="formatHeading('h3')" title="Heading 3" data-format="h3">H3</button>
+                    <button class="toolbar-btn" onclick="formatHeading('p')" title="Normal Text" data-format="p">P</button>
                 </div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">• List</button>
-                    <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">1. List</button>
-                    <button class="toolbar-btn" onclick="insertCodeBlock()" title="Code Block">&lt;/&gt;</button>
-                    <button class="toolbar-btn" onclick="insertQuote()" title="Quote">❝</button>
+                    <button class="toolbar-btn" onclick="toggleFormat('insertUnorderedList')" title="Bullet List" data-format="insertUnorderedList">• List</button>
+                    <button class="toolbar-btn" onclick="toggleFormat('insertOrderedList')" title="Numbered List" data-format="insertOrderedList">1. List</button>
+                    <button class="toolbar-btn" onclick="toggleCodeFormat()" title="Code/Code Block" data-format="code">&lt;/&gt;</button>
+                    <button class="toolbar-btn" onclick="toggleQuoteFormat()" title="Quote" data-format="quote">❝</button>
                 </div>
                 <div class="toolbar-group">
                     <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">⬅</button>
@@ -944,10 +945,14 @@
                     <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">➡</button>
                 </div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" onclick="createLink()" title="Insert Link">🔗</button>
+                    <button class="toolbar-btn" onclick="createLink()" title="Insert Link" data-format="createLink">🔗</button>
                     <button class="toolbar-btn" onclick="insertImage()" title="Insert Image">🖼</button>
                     <button class="toolbar-btn" onclick="insertYouTubeVideo()" title="YouTube Video">📹</button>
                     <button class="toolbar-btn" onclick="insertTable()" title="Insert Table">📊</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="clearFormatting()" title="Clear Formatting">🧹</button>
+                    <button class="toolbar-btn" onclick="insertLineBreak()" title="Line Break">↵</button>
                 </div>
             </div>
 
@@ -1040,6 +1045,20 @@
             
             // Word count update
             document.getElementById('editor').addEventListener('input', updateWordCount);
+            
+            // Editor event handlers for better formatting control
+            const editor = document.getElementById('editor');
+            
+            // Update toolbar state when cursor moves
+            editor.addEventListener('keyup', updateToolbarState);
+            editor.addEventListener('mouseup', updateToolbarState);
+            editor.addEventListener('focus', updateToolbarState);
+            
+            // Handle keyboard shortcuts
+            editor.addEventListener('keydown', handleEditorKeydown);
+            
+            // Prevent unwanted formatting on Enter key
+            editor.addEventListener('keypress', handleEditorKeypress);
             
             // Category change
             document.getElementById('noteCategorySelect').addEventListener('change', changeNoteCategory);
@@ -1479,33 +1498,478 @@
         // Rich text editor commands
         function execCommand(command, value = null) {
             document.execCommand(command, false, value);
+            updateToolbarState();
             scheduleAutoSave();
         }
 
-        function formatHeading(tag) {
-            execCommand('formatBlock', tag);
+        function toggleFormat(command) {
+            // Handle special cases for lists and other commands
+            if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+                // Check if we're already in a list and toggle appropriately
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const listElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                        ? range.commonAncestorContainer.parentElement.closest('ul, ol')
+                        : range.commonAncestorContainer.closest('ul, ol');
+                    
+                    if (listElement) {
+                        // Remove list formatting
+                        const items = listElement.querySelectorAll('li');
+                        const fragment = document.createDocumentFragment();
+                        items.forEach(item => {
+                            const div = document.createElement('div');
+                            div.innerHTML = item.innerHTML;
+                            fragment.appendChild(div);
+                        });
+                        listElement.parentNode.replaceChild(fragment, listElement);
+                    } else {
+                        execCommand(command);
+                    }
+                }
+            } else {
+                // Standard toggle for bold, italic, underline, strikethrough
+                execCommand(command);
+            }
+            updateToolbarState();
         }
 
-        function insertCodeBlock() {
-            const code = prompt('Enter your code:\n(You can paste multi-line code here)');
-            if (code) {
-                const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
-                execCommand('insertHTML', codeBlock);
+        function formatHeading(tag) {
+            // If already in a heading and clicking the same heading, convert to paragraph
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const currentElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                    ? range.commonAncestorContainer.parentElement
+                    : range.commonAncestorContainer;
+                
+                const heading = currentElement.closest('h1, h2, h3, h4, h5, h6');
+                if (heading && heading.tagName.toLowerCase() === tag) {
+                    execCommand('formatBlock', 'p');
+                } else {
+                    execCommand('formatBlock', tag);
+                }
+            } else {
+                execCommand('formatBlock', tag);
+            }
+            updateToolbarState();
+        }
+
+        function updateToolbarState() {
+            // Update toolbar buttons to show active state
+            const toolbarButtons = document.querySelectorAll('.toolbar-btn[data-format]');
+            
+            toolbarButtons.forEach(button => {
+                button.classList.remove('active');
+                const format = button.getAttribute('data-format');
+                
+                if (format === 'h1' || format === 'h2' || format === 'h3' || format === 'p') {
+                    // Check for block format
+                    const blockFormat = document.queryCommandValue('formatBlock').toLowerCase();
+                    if (blockFormat === format || (format === 'p' && (blockFormat === 'div' || blockFormat === ''))) {
+                        button.classList.add('active');
+                    }
+                } else if (format === 'insertUnorderedList' || format === 'insertOrderedList') {
+                    // Check for list format
+                    const listType = format === 'insertUnorderedList' ? 'ul' : 'ol';
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const listElement = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                            ? range.commonAncestorContainer.parentElement.closest('ul, ol')
+                            : range.commonAncestorContainer.closest('ul, ol');
+                        if (listElement && listElement.tagName.toLowerCase() === listType) {
+                            button.classList.add('active');
+                        }
+                    }
+                } else if (format === 'createLink') {
+                    // Check if cursor is in a link
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const element = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                            ? range.commonAncestorContainer.parentElement 
+                            : range.commonAncestorContainer;
+                        if (element.closest('a')) {
+                            button.classList.add('active');
+                        }
+                    }
+                } else if (format === 'code') {
+                    // Check if cursor is in code (inline or block)
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const element = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                            ? range.commonAncestorContainer.parentElement 
+                            : range.commonAncestorContainer;
+                        if (element.closest('code, pre')) {
+                            button.classList.add('active');
+                        }
+                    }
+                } else if (format === 'quote') {
+                    // Check if cursor is in a quote
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const element = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                            ? range.commonAncestorContainer.parentElement 
+                            : range.commonAncestorContainer;
+                        if (element.closest('blockquote')) {
+                            button.classList.add('active');
+                        }
+                    }
+                } else {
+                    // Check for inline format (bold, italic, underline, strikethrough)
+                    if (document.queryCommandState(format)) {
+                        button.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        function clearFormatting() {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
+            // If nothing is selected, select all content
+            if (selection.isCollapsed) {
+                const editor = document.getElementById('editor');
+                const range = document.createRange();
+                range.selectNodeContents(editor);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            
+            // Remove all formatting
+            execCommand('removeFormat');
+            execCommand('formatBlock', 'p');
+            
+            // Clean up any remaining unwanted elements
+            setTimeout(() => {
+                cleanupFormatting();
+            }, 10);
+        }
+
+        function cleanupFormatting() {
+            const editor = document.getElementById('editor');
+            const unwantedTags = ['font', 'span', 'div'];
+            
+            unwantedTags.forEach(tagName => {
+                const elements = editor.querySelectorAll(tagName);
+                elements.forEach(element => {
+                    // Only remove if it has no meaningful attributes or styling
+                    const hasClass = element.className && element.className.trim();
+                    const hasStyle = element.style && element.style.cssText;
+                    const hasId = element.id;
+                    
+                    if (!hasClass && !hasStyle && !hasId) {
+                        // Move children out and remove the wrapper
+                        while (element.firstChild) {
+                            element.parentNode.insertBefore(element.firstChild, element);
+                        }
+                        element.parentNode.removeChild(element);
+                    }
+                });
+            });
+            
+            updateToolbarState();
+        }
+
+        function insertLineBreak() {
+            // Insert a proper line break that doesn't inherit formatting
+            const br = document.createElement('br');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(br);
+                
+                // Move cursor after the break
+                range.setStartAfter(br);
+                range.setEndAfter(br);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            
+            scheduleAutoSave();
+        }
+
+        function toggleCodeFormat() {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
+            const range = selection.getRangeAt(0);
+            const selectedText = selection.toString();
+            
+            // Check if selection is within existing code formatting
+            let codeElement = null;
+            let isInlineCode = false;
+            let isCodeBlock = false;
+            
+            if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                const parentElement = range.commonAncestorContainer.parentElement;
+                codeElement = parentElement.closest('code, pre');
+                if (codeElement) {
+                    isInlineCode = codeElement.tagName.toLowerCase() === 'code' && codeElement.parentElement.tagName.toLowerCase() !== 'pre';
+                    isCodeBlock = codeElement.tagName.toLowerCase() === 'code' && codeElement.parentElement.tagName.toLowerCase() === 'pre';
+                    if (!isCodeBlock && codeElement.tagName.toLowerCase() === 'pre') {
+                        isCodeBlock = true;
+                    }
+                }
+            } else {
+                codeElement = range.commonAncestorContainer.closest('code, pre');
+                if (codeElement) {
+                    isInlineCode = codeElement.tagName.toLowerCase() === 'code' && codeElement.parentElement.tagName.toLowerCase() !== 'pre';
+                    isCodeBlock = codeElement.tagName.toLowerCase() === 'code' && codeElement.parentElement.tagName.toLowerCase() === 'pre';
+                    if (!isCodeBlock && codeElement.tagName.toLowerCase() === 'pre') {
+                        isCodeBlock = true;
+                    }
+                }
+            }
+            
+            if (codeElement) {
+                // Remove existing code formatting
+                if (isCodeBlock) {
+                    // Remove code block - find the pre element
+                    const preElement = codeElement.tagName.toLowerCase() === 'pre' ? codeElement : codeElement.closest('pre');
+                    if (preElement) {
+                        const codeContent = preElement.querySelector('code');
+                        const textContent = codeContent ? codeContent.textContent : preElement.textContent;
+                        const textNode = document.createTextNode(textContent);
+                        preElement.parentNode.replaceChild(textNode, preElement);
+                        
+                        // Select the text that was in the code block
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(textNode);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    }
+                } else if (isInlineCode) {
+                    // Remove inline code formatting
+                    const codeText = codeElement.textContent;
+                    const textNode = document.createTextNode(codeText);
+                    codeElement.parentNode.replaceChild(textNode, codeElement);
+                    
+                    // Select the text that was in the code
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(textNode);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+                
+                scheduleAutoSave();
+                updateToolbarState();
+            } else {
+                // Create new code formatting
+                if (selectedText) {
+                    // If text is selected, ask whether to make it inline code or code block
+                    const isMultiline = selectedText.includes('\n') || selectedText.length > 50;
+                    const makeBlock = isMultiline || confirm('Create code block? (Cancel for inline code)');
+                    
+                    if (makeBlock) {
+                        // Create code block
+                        const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${selectedText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+                        execCommand('insertHTML', codeBlock);
+                    } else {
+                        // Create inline code
+                        const inlineCode = `<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-family: Monaco, Menlo, monospace; font-size: 0.9em;">${selectedText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+                        execCommand('insertHTML', inlineCode);
+                    }
+                } else {
+                    // No text selected, prompt for code
+                    const code = prompt('Enter your code:\n(Multi-line code will create a code block)');
+                    if (code) {
+                        const isMultiline = code.includes('\n');
+                        
+                        if (isMultiline) {
+                            // Create code block
+                            const codeBlock = `<pre style="background: #f4f4f4; padding: 12px; border-radius: 4px; border-left: 4px solid #3b82f6; margin: 12px 0; overflow-x: auto; white-space: pre-wrap;"><code>${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+                            execCommand('insertHTML', codeBlock);
+                        } else {
+                            // Create inline code
+                            const inlineCode = `<code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-family: Monaco, Menlo, monospace; font-size: 0.9em;">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`;
+                            execCommand('insertHTML', inlineCode);
+                        }
+                    }
+                }
+                
+                updateToolbarState();
             }
         }
 
-        function insertQuote() {
-            const quote = prompt('Enter your quote or citation:');
-            if (quote) {
-                const quoteBlock = `<blockquote style="border-left: 4px solid #e2e8f0; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280;">${quote}</blockquote>`;
-                execCommand('insertHTML', quoteBlock);
+        function toggleQuoteFormat() {
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
+            const range = selection.getRangeAt(0);
+            const selectedText = selection.toString();
+            
+            // Check if selection is within existing quote formatting
+            let quoteElement = null;
+            
+            if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                const parentElement = range.commonAncestorContainer.parentElement;
+                quoteElement = parentElement.closest('blockquote');
+            } else {
+                quoteElement = range.commonAncestorContainer.closest('blockquote');
+            }
+            
+            if (quoteElement) {
+                // Remove existing quote formatting
+                // Find the immediate blockquote parent (not nested ones)
+                let targetQuote = null;
+                
+                if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                    let parent = range.commonAncestorContainer.parentElement;
+                    while (parent && parent !== document.body) {
+                        if (parent.tagName && parent.tagName.toLowerCase() === 'blockquote') {
+                            targetQuote = parent;
+                            break;
+                        }
+                        parent = parent.parentElement;
+                    }
+                } else {
+                    let parent = range.commonAncestorContainer;
+                    while (parent && parent !== document.body) {
+                        if (parent.tagName && parent.tagName.toLowerCase() === 'blockquote') {
+                            targetQuote = parent;
+                            break;
+                        }
+                        parent = parent.parentElement;
+                    }
+                }
+                
+                if (targetQuote) {
+                    // Create a document fragment to hold the contents
+                    const fragment = document.createDocumentFragment();
+                    
+                    // Move all children out of the blockquote
+                    while (targetQuote.firstChild) {
+                        fragment.appendChild(targetQuote.firstChild);
+                    }
+                    
+                    // Replace the blockquote with its contents
+                    targetQuote.parentNode.replaceChild(fragment, targetQuote);
+                    
+                    // Try to maintain selection
+                    if (selectedText) {
+                        // Simple text search to reselect
+                        setTimeout(() => {
+                            const editor = document.getElementById('editor');
+                            const text = editor.textContent;
+                            const index = text.indexOf(selectedText);
+                            if (index !== -1) {
+                                const walker = document.createTreeWalker(
+                                    editor,
+                                    NodeFilter.SHOW_TEXT,
+                                    null,
+                                    false
+                                );
+                                
+                                let currentIndex = 0;
+                                let node;
+                                while (node = walker.nextNode()) {
+                                    const nodeLength = node.textContent.length;
+                                    if (currentIndex + nodeLength > index) {
+                                        const startOffset = index - currentIndex;
+                                        const endOffset = Math.min(startOffset + selectedText.length, nodeLength);
+                                        
+                                        const newRange = document.createRange();
+                                        newRange.setStart(node, startOffset);
+                                        newRange.setEnd(node, endOffset);
+                                        selection.removeAllRanges();
+                                        selection.addRange(newRange);
+                                        break;
+                                    }
+                                    currentIndex += nodeLength;
+                                }
+                            }
+                        }, 10);
+                    }
+                }
+                
+                scheduleAutoSave();
+                updateToolbarState();
+            } else {
+                // Create new quote formatting
+                if (selectedText) {
+                    // Convert selected text to quote
+                    const quoteBlock = `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280; background: #f8fafc; padding: 12px 16px; border-radius: 0 4px 4px 0;">${selectedText}</blockquote>`;
+                    execCommand('insertHTML', quoteBlock);
+                } else {
+                    // No text selected, prompt for quote
+                    const quote = prompt('Enter your quote or citation:');
+                    if (quote) {
+                        const quoteBlock = `<blockquote style="border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0; font-style: italic; color: #6b7280; background: #f8fafc; padding: 12px 16px; border-radius: 0 4px 4px 0;">${quote}</blockquote>`;
+                        execCommand('insertHTML', quoteBlock);
+                    }
+                }
+                
+                updateToolbarState();
             }
         }
 
         function createLink() {
-            const url = prompt('Enter the URL:\n(Include http:// or https://)', 'https://');
-            if (url && url !== 'https://') {
-                execCommand('createLink', url);
+            const selection = window.getSelection();
+            if (selection.rangeCount === 0) return;
+            
+            const range = selection.getRangeAt(0);
+            
+            // Check if the selection contains or is within a link
+            let linkElement = null;
+            
+            if (range.commonAncestorContainer.nodeType === Node.TEXT_NODE) {
+                linkElement = range.commonAncestorContainer.parentElement.closest('a');
+            } else {
+                linkElement = range.commonAncestorContainer.closest('a');
+            }
+            
+            // If no link found, check if selection spans a link
+            if (!linkElement && !range.collapsed) {
+                const container = range.commonAncestorContainer;
+                if (container.nodeType === Node.ELEMENT_NODE) {
+                    const links = container.querySelectorAll('a');
+                    for (const link of links) {
+                        if (range.intersectsNode(link)) {
+                            linkElement = link;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (linkElement) {
+                // Remove existing link
+                const linkText = linkElement.textContent;
+                const textNode = document.createTextNode(linkText);
+                linkElement.parentNode.replaceChild(textNode, linkElement);
+                
+                // Select the text that was in the link
+                const newRange = document.createRange();
+                newRange.selectNodeContents(textNode);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                
+                scheduleAutoSave();
+                updateToolbarState();
+            } else {
+                // Create new link
+                const selectedText = selection.toString();
+                let url = prompt('Enter the URL:\n(Include http:// or https://)', 'https://');
+                
+                if (url && url !== 'https://') {
+                    // Ensure URL has protocol
+                    if (!url.match(/^https?:\/\//)) {
+                        url = 'https://' + url;
+                    }
+                    
+                    // Create link with target="_blank" and security attributes
+                    const linkHTML = `<a href="${url}" target="_blank" rel="noopener noreferrer">${selectedText || url}</a>`;
+                    execCommand('insertHTML', linkHTML);
+                    
+                    updateToolbarState();
+                }
             }
         }
 
@@ -1707,6 +2171,108 @@
                 alert('Notebook encryption disabled.');
             }
         }
+
+        function handleEditorKeydown(e) {
+            // Handle keyboard shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        toggleFormat('bold');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        toggleFormat('italic');
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        toggleFormat('underline');
+                        break;
+                    case '\\':
+                        e.preventDefault();
+                        clearFormatting();
+                        break;
+                    case 'enter':
+                        e.preventDefault();
+                        insertLineBreak();
+                        break;
+                }
+            }
+            
+            // Handle backspace in formatted content
+            if (e.key === 'Backspace') {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    
+                    // If cursor is at the beginning of a formatted element, remove formatting
+                    if (range.collapsed && range.startOffset === 0) {
+                        const element = range.startContainer.nodeType === Node.TEXT_NODE 
+                            ? range.startContainer.parentElement 
+                            : range.startContainer;
+                        
+                        if (element.tagName && ['STRONG', 'B', 'EM', 'I', 'U', 'STRIKE', 'S'].includes(element.tagName)) {
+                            e.preventDefault();
+                            
+                            // Move cursor before the formatted element
+                            range.setStartBefore(element);
+                            range.setEndBefore(element);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                            
+                            // Remove one character before
+                            if (range.startOffset > 0) {
+                                range.setStart(range.startContainer, range.startOffset - 1);
+                                range.deleteContents();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleEditorKeypress(e) {
+            if (e.key === 'Enter') {
+                // Check if we're in a heading - if so, create a new paragraph
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const element = range.commonAncestorContainer.nodeType === Node.TEXT_NODE 
+                        ? range.commonAncestorContainer.parentElement 
+                        : range.commonAncestorContainer;
+                    
+                    const heading = element.closest('h1, h2, h3, h4, h5, h6');
+                    if (heading) {
+                        e.preventDefault();
+                        
+                        // Create a new paragraph after the heading
+                        const newParagraph = document.createElement('p');
+                        newParagraph.innerHTML = '<br>';
+                        
+                        // If cursor is at the end of heading, create paragraph after
+                        if (range.endOffset === heading.textContent.length) {
+                            heading.parentNode.insertBefore(newParagraph, heading.nextSibling);
+                        } else {
+                            // Split the heading
+                            const textAfter = heading.textContent.substring(range.endOffset);
+                            heading.textContent = heading.textContent.substring(0, range.endOffset);
+                            newParagraph.textContent = textAfter;
+                            heading.parentNode.insertBefore(newParagraph, heading.nextSibling);
+                        }
+                        
+                        // Move cursor to new paragraph
+                        const newRange = document.createRange();
+                        newRange.setStart(newParagraph, 0);
+                        newRange.setEnd(newParagraph, 0);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                        
+                        scheduleAutoSave();
+                    }
+                }
+            }
+        }
+
         // Initialize app
         window.addEventListener('load', init);
     </script>
