@@ -1,19 +1,21 @@
 # 📝 Portable Notebook
 
-A lightweight, portable notebook application that runs entirely in your browser. No installation required - just download and open the HTML file!
+A lightweight, privacy-focused note-taking application that runs entirely in your browser. No servers, no tracking, just your notes stored locally in a single HTML file.
 
 ## ✨ Features
 
-- 📝 Rich text editing with formatting options
-- 🔒 Optional encryption for your notes
-- 📂 Category-based organization
-- 💾 Auto-save functionality
-- 🔄 Import/Export capabilities
-- 🌐 Update checking
-- 📱 Responsive design
-- 🚀 Fast loading and performance
+- 🔒 Privacy First: All data stays on your device - no cloud, no tracking
+- 📱 Responsive Design: Works perfectly on desktop, tablet, and mobile
+- 📁 Smart Organization: Create unlimited categories to organize your notes
+- 🔍 Instant Search: Quickly find any note with real-time search
+- 🎨 Rich Text Editor: Format your notes with headings, lists, links, images, and more
+- 🔐 Encryption Support: Password-protect your entire notebook with AES-256 encryption
+- 💾 Portable Format: Single HTML file that works offline anywhere
+- 📤 Import/Export: Backup and restore your notes easily
+- ⚡ Auto-save: Your changes are automatically saved as you type
+- 🎯 Keyboard Shortcuts: Efficient text formatting with familiar shortcuts
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 1. Download `notebook.html` or `notebook-min.html`
 2. Open the file in any modern web browser
@@ -99,4 +101,4 @@ For support, please open an issue on GitHub or contact the maintainer.
 
 ---
 
-Made with ❤️ by Tolin Simpson 
+Made with ❤️ for privacy-conscious note-takers 

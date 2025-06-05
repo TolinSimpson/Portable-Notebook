@@ -5,11 +5,13 @@ const UglifyJS = require('uglify-js');
 const CleanCSS = require('clean-css');
 
 async function minifyNotebook() {
+    const inputFile = 'notebook.html';
+    const outputFile = 'notebook-min.html';
+    
     try {
-        // Read the original file
-        const inputFile = path.join(__dirname, 'notebook.html');
-        const outputFile = path.join(__dirname, 'notebook-min.html');
+        console.log('🚀 Starting minification process...');
         
+        // Read the original file
         let content = fs.readFileSync(inputFile, 'utf8');
         
         // Extract and minify CSS
@@ -27,78 +29,135 @@ async function minifyNotebook() {
         }
         
         // Extract and minify JavaScript
-        const jsRegex = /<script>([\s\S]*?)<\/script>/gi;
-        const jsMatches = content.match(jsRegex);
+        const jsRegex = /<script>([\s\S]*?)<\/script>/;
+        const jsMatch = content.match(jsRegex);
         
-        if (jsMatches) {
-            const jsContent = jsMatches[0].replace(/<\/?script>/gi, '');
-            const minifiedJS = UglifyJS.minify(jsContent, {
-                compress: {
-                    drop_console: false, // Keep console.error for debugging
-                    drop_debugger: true,
-                    pure_funcs: ['console.log'],
-                    passes: 2
-                },
+        if (jsMatch) {
+            const originalJs = jsMatch[1];
+            console.log('📄 Minifying JavaScript...');
+            
+            // Configure UglifyJS with very conservative settings to preserve functionality
+            const uglifyOptions = {
                 mangle: {
-                    reserved: ['NOTES_DATA', 'CATEGORIES_DATA'] // Keep these for data integrity
+                    reserved: [
+                        // Core function names that must be preserved for HTML event handlers
+                        'generateUpdatedHTML', 'encryptText', 'decryptText', 'unlockNotebook',
+                        'downloadUpdatedFile', 'saveCurrentNote', 'selectNote', 'createNewNote',
+                        'addCategory', 'deleteCategory', 'selectCategory', 'updateCategoryList',
+                        'updateNoteList', 'updateCategorySelect', 'changeNoteCategory',
+                        'deleteCurrentNote', 'toggleEncryption', 'toggleFormat', 'formatHeading',
+                        'execCommand', 'updateToolbarState', 'clearFormatting', 'insertLineBreak',
+                        'toggleCodeFormat', 'toggleQuoteFormat', 'createLink', 'insertImage',
+                        'insertYouTubeVideo', 'insertTable', 'deriveKey', 'scheduleAutoSave',
+                        'setSaveStatus', 'updateWordCount', 'init', 'setupEventListeners',
+                        'handleEditorKeydown', 'handleEditorKeypress', 'toggleMenu',
+                        'checkForUpdates', 'compareVersions', 'exportNotes', 'importNotes',
+                        'showAbout', 'closeAboutModal', 'cleanupFormatting',
+                        
+                        // Critical data variables that are referenced throughout
+                        'notes', 'categories', 'notesToSave', 'NOTES_DATA', 'CATEGORIES_DATA',
+                        'currentNote', 'currentCategory', 'searchQuery', 'autoSaveTimer',
+                        'pendingChanges', 'encryptionEnabled', 'encryptionKey', 'notebookUnlocked',
+                        'REPO_BASE_URL', 'CURRENT_VERSION',
+                        
+                        // Template variables for replacement functionality
+                        'newNotesData', 'htmlContent', 'notesDataRegex'
+                    ]
+                },
+                compress: {
+                    // Very conservative compression settings
+                    drop_console: false,
+                    drop_debugger: true,
+                    pure_funcs: [],
+                    keep_fargs: true,  // Keep function arguments
+                    unsafe_comps: false,
+                    unsafe_math: false,
+                    unsafe_proto: false,
+                    unsafe_regexp: false,
+                    unsafe_undefined: false,
+                    collapse_vars: false,  // Don't collapse variables
+                    reduce_vars: false,    // Don't reduce variables
+                    join_vars: false,      // Don't join variable declarations
+                    sequences: false,      // Don't use comma operator
+                    properties: false,     // Don't optimize property access
                 },
                 output: {
-                    comments: false
+                    comments: function(node, comment) {
+                        // Preserve NOTES DATA comments which are critical for template replacement
+                        const commentText = comment.value || '';
+                        return commentText.includes('NOTES DATA') || 
+                               commentText.includes('END NOTES DATA');
+                    },
+                    beautify: false
                 }
-            });
+            };
+            
+            const minifiedJS = UglifyJS.minify(originalJs, uglifyOptions);
             
             if (minifiedJS.error) {
-                console.error('JavaScript minification error:', minifiedJS.error);
+                console.error('❌ UglifyJS error:', minifiedJS.error);
                 throw minifiedJS.error;
             }
             
+            // Replace the JavaScript in the content
             content = content.replace(jsRegex, `<script>${minifiedJS.code}</script>`);
+            console.log('✅ JavaScript minified successfully');
         }
         
-        // Minify HTML
-        const minifiedHTML = await minifyHTML(content, {
-            collapseWhitespace: true,
+        console.log('📄 Minifying HTML...');
+        
+        // Minify HTML while preserving essential structure
+        const htmlMinifyOptions = {
             removeComments: true,
-            removeEmptyAttributes: true,
-            removeOptionalTags: true,
+            removeCommentsFromCDATA: true,
+            removeCDATASectionsFromCDATA: true,
+            collapseWhitespace: true,
+            conservativeCollapse: false,
+            preserveLineBreaks: false,
+            collapseBooleanAttributes: true,
+            removeAttributeQuotes: true,
             removeRedundantAttributes: true,
+            useShortDoctype: true,
+            removeEmptyAttributes: true,
             removeScriptTypeAttributes: true,
             removeStyleLinkTypeAttributes: true,
-            removeTagWhitespace: true,
-            useShortDoctype: true,
-            minifyCSS: false, // Already done above
-            minifyJS: false,  // Already done above
-            caseSensitive: false,
-            keepClosingSlash: false,
-            removeAttributeQuotes: true,
+            removeOptionalTags: false,
+            removeIgnored: false,
             removeEmptyElements: false,
-            sortAttributes: true,
-            sortClassName: true
-        });
+            lint: false,
+            keepClosingSlash: false,
+            caseSensitive: false,
+            minifyJS: false, // We already minified JS separately
+            minifyCSS: {
+                level: 2
+            }
+        };
         
-        // Write minified file
-        fs.writeFileSync(outputFile, minifiedHTML);
+        const minifiedHtml = await minifyHTML(content, htmlMinifyOptions);
         
-        // Calculate size reduction
+        // Write the minified content
+        fs.writeFileSync(outputFile, minifiedHtml);
+        console.log('✅ HTML minified successfully');
+        
+        // Get file sizes for comparison
         const originalSize = fs.statSync(inputFile).size;
         const minifiedSize = fs.statSync(outputFile).size;
         const reduction = ((originalSize - minifiedSize) / originalSize * 100).toFixed(1);
         
-        console.log(`✅ Minification complete!`);
-        console.log(`📄 Original size: ${(originalSize / 1024).toFixed(1)} KB`);
-        console.log(`📄 Minified size: ${(minifiedSize / 1024).toFixed(1)} KB`);
-        console.log(`📉 Size reduction: ${reduction}%`);
+        console.log('\n🎉 Minification completed successfully!');
+        console.log(`📦 Original size: ${(originalSize / 1024).toFixed(1)} KB`);
+        console.log(`📦 Minified size: ${(minifiedSize / 1024).toFixed(1)} KB`);
+        console.log(`📊 Size reduction: ${reduction}%`);
         console.log(`💾 Output: ${outputFile}`);
         
     } catch (error) {
-        console.error('❌ Minification failed:', error);
+        console.error('❌ Minification failed:', error.message);
+        console.error(error.stack);
         process.exit(1);
     }
 }
 
-// Run if called directly
-if (require.main === module) {
-    minifyNotebook();
-}
+// Run the minification
+minifyNotebook();
 
 module.exports = minifyNotebook; 
