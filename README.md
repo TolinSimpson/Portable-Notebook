@@ -16,15 +16,6 @@ A lightweight, privacy-focused note-taking application that runs entirely in you
 - ⚡ **Auto-save**: Your changes are automatically saved as you type
 - 🚀 **Optimized Performance**: Minified version is 20% smaller for faster loading
 
-## 📱 Mobile Features
-
-- **Responsive Layout**: Adapts seamlessly to any screen size
-- **Touch Navigation**: Easy-to-use bottom navigation for mobile devices
-- **Optimized Controls**: Buttons and inputs sized appropriately for touch interaction
-- **Readable Typography**: Font sizes and spacing optimized for mobile reading
-- **Efficient Toolbar**: Horizontally scrollable toolbar for text formatting
-- **Mobile-First Design**: Built with mobile users in mind
-
 ## 🚀 Quick Start
 
 1. Download `notebook-dev.html` (development) or `notebook.html` (optimized)

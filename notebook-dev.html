@@ -266,7 +266,7 @@ function setSaveStatus(status){const dot=document.getElementById('SaveDot'),text
 
 function UpdateWordCount(){const content=document.getElementById('Editor').textContent||'';const words=content.trim()?content.trim().split(/\s+/).length:0;document.getElementById('WordCount').textContent=`${words} word${words!==1?'s':''}`;}
 
-async function downloadUpdatedFile(){let notesToSave=JSON.parse(JSON.stringify(notes));if(encryptionEnabled&&encryptionKey){for(const[noteId,note]of Object.entries(notesToSave)){if(note.encrypted){note.content=await encryptText(note.content,encryptionKey);}}}const notesDataRegex=/\/\/ NOTES DATA - DO NOT EDIT MANUALLY[\s\S]*?\/\/ END NOTES DATA/;const newNotesData=`// NOTES DATA - DO NOT EDIT MANUALLY\nlet NOTES_DATA = ${JSON.stringify(notesToSave)};\nlet TAGS_DATA = ${JSON.stringify(tags)};\n// END NOTES DATA`;const htmlContent=document.documentElement.outerHTML.replace(notesDataRegex,newNotesData);const blob=new Blob([htmlContent],{type:'text/html'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='notebook.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);pendingChanges=false;setSaveStatus('saved');}
+async function downloadUpdatedFile(){let notesToSave=JSON.parse(JSON.stringify(notes));if(encryptionEnabled&&encryptionKey){for(const[noteId,note]of Object.entries(notesToSave)){if(note.encrypted){note.content=await encryptText(note.content,encryptionKey);}}}const notesDataRegex=/\/\/ NOTES DATA - DO NOT EDIT MANUALLY[\s\S]*?\/\/ END NOTES DATA/;const newNotesData=`// NOTES DATA - DO NOT EDIT MANUALLY\nlet NOTES_DATA = ${JSON.stringify(notesToSave)};\nlet TAGS_DATA = ${JSON.stringify(tags)};\n// END NOTES DATA`;const htmlContent=document.documentElement.outerHTML.replace(notesDataRegex,newNotesData);const blob=new Blob([htmlContent],{type:'text/html'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='notebook.html';a.setAttribute('download','notebook.html');document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);pendingChanges=false;setSaveStatus('saved');}
 
 async function saveCurrentNote(){if(!currentNote||!notes[currentNote])return;const note=notes[currentNote];notes[currentNote]={...note,content:document.getElementById('Editor').innerHTML,lastModified:new Date().toISOString(),encrypted:encryptionEnabled};updateNotesList();}
 
@@ -299,8 +299,6 @@ function deleteNote(noteId){if(!confirm('Delete this note? This cannot be undone
 function SelectNote(noteId){if(!notes[noteId])return;const note=notes[noteId];currentNote=noteId;document.getElementById('Editor').innerHTML=note.content;updateAllViews();UpdateWordCount();if(!pendingChanges)setSaveStatus('saved');showView('editor');}
 
 function createNote(){const title=prompt('Enter note title:');if(!title||!title.trim())return;const noteId=Date.now().toString();notes[noteId]={title:title.trim(),content:'',lastModified:new Date().toISOString(),encrypted:encryptionEnabled,tags:[]};SelectNote(noteId);updateNotesList();ScheduleAutoSave();}
-
-
 
 function ToggleFormat(command){document.getElementById('Editor').focus();document.execCommand(command,false,null);UpdateToolbarState();ScheduleAutoSave();}
 
