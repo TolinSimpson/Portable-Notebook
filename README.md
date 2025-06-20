@@ -113,6 +113,7 @@ This generates `notebook-min.html` with:
 - Tap and hold on notes for additional options
 - Use pinch-to-zoom for better readability if needed
 - All features work identically across desktop and mobile
+- Saving on android may create copies see issue #2
 
 ## 🤝 Contributing
 
