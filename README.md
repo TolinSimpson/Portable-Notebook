@@ -123,6 +123,16 @@ Contributions are welcome! Please feel free to submit a Pull Request. When contr
 - Ensure responsive design principles are maintained
 - Verify minification process works correctly
 
+## 📋 Export Control / Compliance
+
+This software includes encryption functionality (AES-256-GCM with PBKDF2 key derivation) and may be subject to export control regulations in the United States and other jurisdictions.
+
+**For this project:** The source code is published and made publicly available without restrictions on further dissemination. It uses only **standard cryptography** (AES-GCM, PBKDF2, SHA-256). Under current U.S. Export Administration Regulations (EAR), such publicly available open source software is **not subject to the EAR** and no additional export notifications are required for the project itself.
+
+**Downstream users:** If you redistribute this software (including modified or derived versions) in a context where source code is not publicly available, or if you incorporate it into a product, you are responsible for evaluating your own compliance with applicable export control laws.
+
+For more information, see: [Understanding US export controls with open source projects](https://www.linuxfoundation.org/resources/publications/understanding-us-export-controls-with-open-source-projects) (The Linux Foundation).
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
